@@ -125,4 +125,29 @@ src/
 - সেলার ছবি আপলোডের সময় ১০০ KB সীমা ক্লায়েন্ট সাইডে চেক করা হয় — Image Resizer (TinyPNG, Squoosh ইত্যাদি) দিয়ে ছবি ছোট করার নির্দেশনা ফর্মেই দেখানো হয়।
 - Shop-এর URL (`/shop/slug`) আসলে path-based — সত্যিকারের Subdomain (যেমন `shopname.yoursite.com`) চাইলে Vercel-এ Wildcard Domain কনফিগার করতে হবে এবং আলাদা DNS + middleware সেটআপ লাগবে, যা এই MVP-তে নেই।
 
-`supabase/migrations/0002_profiles_contact_info.sql` — এই মাইগ্রেশনটিও `0001_init.sql`-এর পর SQL Editor-এ রান করতে হবে (email/phone কলাম যোগ করার জন্য)।
+## ৯. Admin Panel দেখা না গেলে (404 বা ফাঁকা পেজ)
+
+এর সবচেয়ে সাধারণ কারণ দুটো:
+
+1. **`vercel.json` missing ছিল** — এখন যোগ করা হয়েছে। React SPA-তে `/admin`, `/dashboard`, `/shop/xyz` সরাসরি URL দিয়ে খুললে বা রিফ্রেশ করলে Vercel সেটাকে real file হিসেবে খুঁজে 404 দেখায়, যদি না তাকে বলে দেওয়া হয় সব route-কে `index.html`-এ পাঠাতে। Redeploy করার পর এটা ঠিক হয়ে যাবে।
+2. **আপনি এখনো Super Admin না হলে** — Login করা থাকলেও role `super_admin` না হলে `/admin`-এ ঢুকতে চাইলে স্বয়ংক্রিয়ভাবে Homepage-এ Redirect হবে (কোনো error দেখাবে না)। ধাপ ৫ (উপরে) অনুসরণ করে নিজেকে Super Admin বানিয়ে নিন।
+
+## ১০. Password Reset (Super Admin → Seller)
+
+Super Admin এখন "ব্যবহারকারী ম্যানেজমেন্ট" পেজ থেকে যেকোনো ইউজারের পাসওয়ার্ড রিসেট করতে পারবেন। এটি কাজ করে একটি Supabase **Edge Function** এর মাধ্যমে (`supabase/functions/admin-reset-password`), কারণ পাসওয়ার্ড পরিবর্তন করতে `service_role` key লাগে যা কখনো browser-এ রাখা নিরাপদ না — তাই এটা সার্ভার সাইডে চলে।
+
+**যেভাবে কাজ করে:**
+- Admin "পাসওয়ার্ড রিসেট" বাটনে ক্লিক করলে একটি র‍্যান্ডম নতুন পাসওয়ার্ড তৈরি হয় ও সেট হয়ে যায়
+- নতুন পাসওয়ার্ডটি **শুধু একবার**, স্ক্রিনে দেখানো হয় (কপি করার অপশনসহ) — কোথাও সংরক্ষণ করা হয় না
+- Admin সেটা কপি করে নিরাপদ কোনো চ্যানেলে (ফোনে বলে, বা ব্যক্তিগত মেসেজে) সেলারকে জানিয়ে দেবেন
+
+**Deploy করার নিয়ম:**
+```bash
+# Supabase CLI ইনস্টল না থাকলে আগে ইনস্টল করুন: https://supabase.com/docs/guides/cli
+supabase login
+supabase link --project-ref your-project-ref
+supabase functions deploy admin-reset-password
+```
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` — এই তিনটি Secret Supabase Edge Function-এ Deploy করার সময় স্বয়ংক্রিয়ভাবেই available থাকে, আলাদা করে সেট করতে হয় না।
+
+> **নোট:** এই সিস্টেমেও কোথাও plain-text পাসওয়ার্ড ডাটাবেসে সংরক্ষিত হয় না — শুধু Admin নতুন পাসওয়ার্ড *সেট* করতে পারেন এবং একবার দেখতে পারেন, যা সেলারের কাছে পৌঁছে দেওয়ার জন্যই যথেষ্ট।
