@@ -12,6 +12,7 @@ import { ROUTES } from "@/constants/routes";
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [wantsSeller, setWantsSeller] = useState(true);
   const [error, setError] = useState("");
@@ -24,7 +25,7 @@ export default function RegisterPage() {
     setError("");
     setSubmitting(true);
 
-    const { data, error: signUpError } = await signUp(email, password, fullName);
+    const { data, error: signUpError } = await signUp(email, password, fullName, phone);
     if (signUpError) {
       setError(signUpError.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে।");
       setSubmitting(false);
@@ -72,6 +73,17 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">মোবাইল নম্বর</Label>
+              <Input
+                id="phone"
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="01XXXXXXXXX"
               />
             </div>
             <div className="space-y-1.5">

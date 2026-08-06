@@ -62,11 +62,11 @@ export function AuthProvider({ children }) {
     return { error };
   };
 
-  const signUp = async (email, password, fullName) => {
+  const signUp = async (email, password, fullName, phone) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: { data: { full_name: fullName, phone } },
     });
     return { data, error };
   };

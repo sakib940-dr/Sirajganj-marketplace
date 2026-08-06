@@ -112,10 +112,17 @@ src/
 ## ৭. বর্তমান Development Status
 
 - ✅ Phase 0 — Project Setup
-- ✅ Phase 1 — Database, RLS, Authentication
-- ✅ Phase 2 — Public Website (Homepage, Category, Shop, Product, Search)
-- 🔶 Phase 3 — Seller Dashboard (Overview সম্পন্ন; Shop/Product/Gallery ফর্ম পরবর্তী ধাপে)
-- 🔶 Phase 4 — Admin Panel (Dashboard ও Seller Approval সম্পন্ন; Category/Product/Banner/Settings পরবর্তী ধাপে)
-- ⬜ Phase 5 — Polish ও Final Deployment Testing
+- ✅ Phase 1 — Database, RLS, Authentication (email + phone সহ Registration)
+- ✅ Phase 2 — Public Website (Homepage, Category, Shop, Product, Search, WhatsApp Buy বাটন)
+- ✅ Phase 3 — Seller Dashboard (Shop Info, Product CRUD, Gallery — সবই কার্যকর, ছবি আপলোডে ১০০ KB সীমা)
+- ✅ Phase 4 — Admin Panel (User Management, Seller Approval, Category, Product, Banner, Site Settings — সবই কার্যকর)
+- ⬜ Phase 5 — Polish, Full Responsive QA ও Final Deployment Testing
 
-`PhaseComingSoon` লেবেলযুক্ত পেজগুলো পরবর্তী ধাপে পূর্ণাঙ্গ করা হবে।
+## ৮. গুরুত্বপূর্ণ নিরাপত্তা নোট
+
+- **Password কখনো plain text-এ কোথাও সংরক্ষণ করা হয় না** — Supabase Auth নিজেই hash করে রাখে, Admin Panel থেকেও তা দেখা যায় না। এটি একটি ইচ্ছাকৃত ডিজাইন সিদ্ধান্ত, নিরাপত্তার জন্য।
+- নতুন Admin account সরাসরি email/password দিয়ে তৈরি করা হয় না (এতে `service_role` key browser-এ এক্সপোজ করা লাগতো, যা নিরাপদ না)। বদলে, **যেকোনো Registered User-কে "ব্যবহারকারী ম্যানেজমেন্ট" পেজ থেকে Admin বানানো/সরানো যায়** — একই ফলাফল, নিরাপদ পদ্ধতিতে।
+- সেলার ছবি আপলোডের সময় ১০০ KB সীমা ক্লায়েন্ট সাইডে চেক করা হয় — Image Resizer (TinyPNG, Squoosh ইত্যাদি) দিয়ে ছবি ছোট করার নির্দেশনা ফর্মেই দেখানো হয়।
+- Shop-এর URL (`/shop/slug`) আসলে path-based — সত্যিকারের Subdomain (যেমন `shopname.yoursite.com`) চাইলে Vercel-এ Wildcard Domain কনফিগার করতে হবে এবং আলাদা DNS + middleware সেটআপ লাগবে, যা এই MVP-তে নেই।
+
+`supabase/migrations/0002_profiles_contact_info.sql` — এই মাইগ্রেশনটিও `0001_init.sql`-এর পর SQL Editor-এ রান করতে হবে (email/phone কলাম যোগ করার জন্য)।

@@ -2,6 +2,7 @@ import { Outlet, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
+  UserCog,
   FolderTree,
   Package,
   GalleryHorizontal,
@@ -13,6 +14,7 @@ import { ROUTES } from "@/constants/routes";
 
 const navItems = [
   { to: ROUTES.ADMIN, label: "ড্যাশবোর্ড", icon: LayoutDashboard, end: true },
+  { to: ROUTES.ADMIN_USERS, label: "ব্যবহারকারী", icon: UserCog },
   { to: ROUTES.ADMIN_SELLERS, label: "সেলার ম্যানেজমেন্ট", icon: Users },
   { to: ROUTES.ADMIN_CATEGORIES, label: "ক্যাটাগরি", icon: FolderTree },
   { to: ROUTES.ADMIN_PRODUCTS, label: "পণ্য ম্যানেজমেন্ট", icon: Package },

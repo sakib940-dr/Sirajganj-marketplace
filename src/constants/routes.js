@@ -15,6 +15,7 @@ export const ROUTES = {
   DASHBOARD_GALLERY: "/dashboard/gallery",
 
   ADMIN: "/admin",
+  ADMIN_USERS: "/admin/users",
   ADMIN_SELLERS: "/admin/sellers",
   ADMIN_CATEGORIES: "/admin/categories",
   ADMIN_PRODUCTS: "/admin/products",

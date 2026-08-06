@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-const PRODUCT_SELECT = "*, shops:shop_id ( shop_name, slug ), categories:category_id ( name, slug )";
+const PRODUCT_SELECT =
+  "*, shops:shop_id ( shop_name, slug, whatsapp_number ), categories:category_id ( name, slug )";
 
 export function useLatestProducts({ limit = 8 } = {}) {
   const [products, setProducts] = useState([]);

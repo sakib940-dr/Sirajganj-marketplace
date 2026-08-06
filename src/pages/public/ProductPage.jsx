@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
-import { Package, Store } from "lucide-react";
+import { Package, Store, MessageCircle } from "lucide-react";
 import { useProductBySlug } from "@/hooks/useProducts";
 import { formatPriceBn } from "@/lib/utils";
 import { shopPath } from "@/constants/routes";
@@ -65,6 +65,20 @@ export default function ProductPage() {
             {product.name}
           </h1>
           <p className="mt-3 text-3xl font-bold text-primary">{formatPriceBn(product.price)}</p>
+
+          {product.shops?.whatsapp_number && (
+            <a
+              href={`https://wa.me/${product.shops.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
+                `আমি "${product.name}" পণ্যটি (মূল্য: ${formatPriceBn(product.price)}) কিনতে আগ্রহী। এই লিংক থেকে দেখেছি: ${window.location.href}`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
+            >
+              <MessageCircle className="h-5 w-5" />
+              হোয়াটসঅ্যাপে কিনুন
+            </a>
+          )}
 
           {product.description && (
             <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">

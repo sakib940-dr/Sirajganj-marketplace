@@ -25,6 +25,7 @@ import GalleryPage from "@/pages/seller/GalleryPage.jsx";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard.jsx";
+import UserManagePage from "@/pages/admin/UserManagePage.jsx";
 import SellerManagePage from "@/pages/admin/SellerManagePage.jsx";
 import CategoryManagePage from "@/pages/admin/CategoryManagePage.jsx";
 import ProductManagePage from "@/pages/admin/ProductManagePage.jsx";
@@ -70,6 +71,7 @@ export default function AppRoutes() {
         }
       >
         <Route path={ROUTES.ADMIN} element={<AdminDashboard />} />
+        <Route path={ROUTES.ADMIN_USERS} element={<UserManagePage />} />
         <Route path={ROUTES.ADMIN_SELLERS} element={<SellerManagePage />} />
         <Route path={ROUTES.ADMIN_CATEGORIES} element={<CategoryManagePage />} />
         <Route path={ROUTES.ADMIN_PRODUCTS} element={<ProductManagePage />} />

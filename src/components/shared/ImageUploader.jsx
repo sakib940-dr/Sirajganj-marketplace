@@ -1,0 +1,108 @@
+import { useRef, useState } from "react";
+import { Upload, X, ImageIcon, AlertCircle } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const MAX_SIZE_KB = 100;
+const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
+
+/**
+ * @param {string} bucket - Supabase storage bucket name
+ * @param {string} folder - user id বা shop id, ফাইল path prefix হিসেবে ব্যবহৃত হয়
+ * @param {string} value - বর্তমান ছবির URL (থাকলে)
+ * @param {(url: string) => void} onUploaded - আপলোড সফল হলে public URL ফেরত দেয়
+ * @param {"square" | "wide"} aspect - প্রিভিউ শেপ
+ */
+export default function ImageUploader({ bucket, folder, value, onUploaded, aspect = "square" }) {
+  const inputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError("");
+
+    if (!file.type.startsWith("image/")) {
+      setError("শুধুমাত্র ছবি ফাইল আপলোড করা যাবে।");
+      return;
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      setError(
+        `ছবিটির সাইজ ${(file.size / 1024).toFixed(0)} KB — সর্বোচ্চ ${MAX_SIZE_KB} KB অনুমোদিত। অনুগ্রহ করে একটি Image Resizer/Compressor অ্যাপ বা ওয়েবসাইট (যেমন TinyPNG, Squoosh) দিয়ে ছবিটি ${MAX_SIZE_KB} KB-এর মধ্যে ছোট করে আবার আপলোড করুন।`
+      );
+      e.target.value = "";
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${folder}/${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, {
+      upsert: true,
+    });
+
+    if (uploadError) {
+      setError("আপলোড ব্যর্থ হয়েছে: " + uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    onUploaded(data.publicUrl);
+    setUploading(false);
+  };
+
+  return (
+    <div>
+      <div
+        className={cn(
+          "relative flex items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border bg-secondary/50",
+          aspect === "square" ? "h-28 w-28" : "h-28 w-full"
+        )}
+      >
+        {value ? (
+          <>
+            <img src={value} alt="" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              onClick={() => onUploaded("")}
+              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+              aria-label="ছবি মুছুন"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </>
+        ) : (
+          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+        )}
+      </div>
+
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-2"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+      >
+        <Upload className="h-3.5 w-3.5" />
+        {uploading ? "আপলোড হচ্ছে..." : "ছবি আপলোড করুন"}
+      </Button>
+      <p className="mt-1 text-xs text-muted-foreground">
+        সর্বোচ্চ {MAX_SIZE_KB} KB সাইজের ছবি আপলোড করা যাবে। আপলোডের আগে Image Resizer/Compressor দিয়ে ছবি ছোট করে নিন।
+      </p>
+
+      {error && (
+        <p className="mt-1.5 flex items-start gap-1.5 text-xs text-destructive">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
