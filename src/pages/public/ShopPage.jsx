@@ -1,0 +1,143 @@
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Phone, MapPin, Facebook, Map, MessageCircle, Store, Package } from "lucide-react";
+import { useShopBySlug } from "@/hooks/useShops";
+import { supabase } from "@/lib/supabaseClient";
+import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
+import EmptyState from "@/components/shared/EmptyState.jsx";
+import ProductCard from "@/components/shared/ProductCard.jsx";
+
+export default function ShopPage() {
+  const { shopSlug } = useParams();
+  const { shop, loading, error } = useShopBySlug(shopSlug);
+  const [products, setProducts] = useState([]);
+  const [gallery, setGallery] = useState([]);
+
+  useEffect(() => {
+    if (!shop?.id) return;
+    supabase
+      .from("products")
+      .select("*")
+      .eq("shop_id", shop.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setProducts(data ?? []));
+
+    supabase
+      .from("shop_gallery")
+      .select("*")
+      .eq("shop_id", shop.id)
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => setGallery(data ?? []));
+  }, [shop?.id]);
+
+  if (loading) return <LoadingSpinner fullScreen label="দোকান লোড হচ্ছে..." />;
+
+  if (error || !shop) {
+    return (
+      <div className="container py-16">
+        <EmptyState
+          icon={Store}
+          title="দোকানটি খুঁজে পাওয়া যায়নি"
+          description="লিংকটি সঠিক কিনা যাচাই করুন অথবা হোমপেজে ফিরে যান।"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="h-40 w-full bg-secondary md:h-64">
+        {shop.banner_url && <img src={shop.banner_url} alt="" className="h-full w-full object-cover" />}
+      </div>
+
+      <div className="container -mt-12 pb-16">
+        <div className="flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-6 shadow-sm md:flex-row md:items-center">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-primary text-primary-foreground shadow">
+            {shop.logo_url ? (
+              <img src={shop.logo_url} alt={shop.shop_name} className="h-full w-full object-cover" />
+            ) : (
+              <Store className="h-8 w-8" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
+              {shop.shop_name}
+            </h1>
+            {shop.about && <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{shop.about}</p>}
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
+          <div className="space-y-4 rounded-xl border border-border bg-card p-5 md:col-span-1">
+            <h3 className="font-semibold">যোগাযোগ</h3>
+            {shop.phone && (
+              <a href={`tel:${shop.phone}`} className="flex items-center gap-2 text-sm text-foreground hover:text-primary">
+                <Phone className="h-4 w-4 text-primary" /> {shop.phone}
+              </a>
+            )}
+            {shop.whatsapp_number && (
+              <a
+                href={`https://wa.me/${shop.whatsapp_number.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
+              >
+                <MessageCircle className="h-4 w-4 text-primary" /> হোয়াটসঅ্যাপে বার্তা দিন
+              </a>
+            )}
+            {shop.address && (
+              <p className="flex items-center gap-2 text-sm text-foreground">
+                <MapPin className="h-4 w-4 shrink-0 text-primary" /> {shop.address}
+              </p>
+            )}
+            {shop.google_map_link && (
+              <a
+                href={shop.google_map_link}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
+              >
+                <Map className="h-4 w-4 text-primary" /> ম্যাপে দেখুন
+              </a>
+            )}
+            {shop.facebook_link && (
+              <a
+                href={shop.facebook_link}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
+              >
+                <Facebook className="h-4 w-4 text-primary" /> ফেসবুক পেজ
+              </a>
+            )}
+          </div>
+
+          <div className="md:col-span-2">
+            <h3 className="mb-3 font-semibold">পণ্যসমূহ</h3>
+            {products.length === 0 ? (
+              <EmptyState icon={Package} title="এই দোকানে এখনো কোনো পণ্য যোগ করা হয়নি" />
+            ) : (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {products.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {gallery.length > 0 && (
+          <div className="mt-8">
+            <h3 className="mb-3 font-semibold">গ্যালারি</h3>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+              {gallery.map((g) => (
+                <img key={g.id} src={g.image_url} alt="" className="aspect-square w-full rounded-lg object-cover" />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

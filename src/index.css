@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* পটভূমি — হালকা সবুজাভ-ধূসর (Bengal-এর জলাভূমি থেকে অনুপ্রাণিত) */
+    --background: 140 15% 96%;
+    --foreground: 169 37% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 169 37% 14%;
+
+    /* Primary — গাঢ় টিল/নীল-সবুজ (শাড়ির পাড়, নকশিকাঁথার রঙ) */
+    --primary: 176 76% 18%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Accent — হলুদ/জাফরান (মাড়িগোল্ড, হলুদ, দোকানের সাইনবোর্ড) */
+    --accent: 38 74% 56%;
+    --accent-foreground: 169 37% 12%;
+
+    --secondary: 176 30% 92%;
+    --secondary-foreground: 176 76% 18%;
+
+    --muted: 140 10% 91%;
+    --muted-foreground: 169 15% 40%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 140 15% 88%;
+    --input: 140 15% 85%;
+    --ring: 176 76% 18%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: "Tiro Bangla", "Hind Siliguri", serif;
+  }
+}
+
+/* Signature texture — একটি সূক্ষ্ম "নকশিকাঁথা"-অনুপ্রাণিত ড্যাশড বর্ডার প্যাটার্ন,
+   হেডার/ফুটার বিভাজক এবং কার্ড হাইলাইটে ব্যবহারের জন্য */
+.kantha-divider {
+  height: 3px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    hsl(var(--accent)) 0px,
+    hsl(var(--accent)) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+}
+
+.focus-ring {
+  @apply outline-none ring-2 ring-offset-2 ring-[hsl(var(--ring))] ring-offset-[hsl(var(--background))];
+}
