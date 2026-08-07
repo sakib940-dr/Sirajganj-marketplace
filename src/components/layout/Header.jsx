@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Store, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Search, Menu, X, Store, LayoutDashboard, ShieldCheck, LogIn, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -69,11 +69,26 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to={ROUTES.LOGIN}>লগইন</Link>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="border-primary/25 text-primary shadow-sm hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+              >
+                <Link to={ROUTES.LOGIN}>
+                  <LogIn className="h-4 w-4" />
+                  লগইন
+                </Link>
               </Button>
-              <Button variant="accent" size="sm" asChild>
-                <Link to={ROUTES.REGISTER}>সেলার হোন</Link>
+              <Button
+                size="sm"
+                asChild
+                className="relative overflow-hidden bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-md shadow-accent/30 transition-transform hover:scale-[1.03] hover:shadow-lg hover:shadow-accent/40"
+              >
+                <Link to={ROUTES.REGISTER}>
+                  <Sparkles className="h-4 w-4" />
+                  সেলার হোন
+                </Link>
               </Button>
             </>
           )}
@@ -115,11 +130,28 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link to={ROUTES.LOGIN} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
-                লগইন
-              </Link>
-              <Button variant="accent" size="sm" asChild>
-                <Link to={ROUTES.REGISTER}>সেলার হোন</Link>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="w-full justify-center border-primary/25 text-primary shadow-sm hover:border-primary/50 hover:bg-primary/5"
+                onClick={() => setMobileOpen(false)}
+              >
+                <Link to={ROUTES.LOGIN}>
+                  <LogIn className="h-4 w-4" />
+                  লগইন
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                asChild
+                className="w-full justify-center bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-md shadow-accent/30"
+                onClick={() => setMobileOpen(false)}
+              >
+                <Link to={ROUTES.REGISTER}>
+                  <Sparkles className="h-4 w-4" />
+                  সেলার হোন
+                </Link>
               </Button>
             </>
           )}

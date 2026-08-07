@@ -25,6 +25,7 @@ import ProductListPage from "@/pages/seller/ProductListPage.jsx";
 import ProductEditPage from "@/pages/seller/ProductEditPage.jsx";
 import GalleryPage from "@/pages/seller/GalleryPage.jsx";
 import SellerVerificationPage from "@/pages/seller/SellerVerificationPage.jsx";
+import AnalyticsPage from "@/pages/seller/AnalyticsPage.jsx";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard.jsx";
@@ -68,6 +69,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.DASHBOARD_PRODUCT_EDIT} element={<ProductEditPage />} />
         <Route path={ROUTES.DASHBOARD_GALLERY} element={<GalleryPage />} />
         <Route path={ROUTES.DASHBOARD_VERIFICATION} element={<SellerVerificationPage />} />
+        <Route path={ROUTES.DASHBOARD_ANALYTICS} element={<AnalyticsPage />} />
       </Route>
 
       {/* Admin Panel (protected, role: admin অথবা super_admin) */}
