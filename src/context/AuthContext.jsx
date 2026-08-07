@@ -72,8 +72,8 @@ export function AuthProvider({ children }) {
   }, [fetchProfile]);
 
   const signIn = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    return { data, error };
   };
 
   const signUp = async (email, password, fullName, phone) => {

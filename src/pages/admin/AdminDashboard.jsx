@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Store, Package, FolderTree, Users } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/hooks/useAuth";
+import { ROLES } from "@/constants/roles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const STATS = [
@@ -10,6 +12,8 @@ const STATS = [
 ];
 
 export default function AdminDashboard() {
+  const { role } = useAuth();
+  const isSuperAdmin = role === ROLES.SUPER_ADMIN;
   const [counts, setCounts] = useState({});
   const [pendingSellers, setPendingSellers] = useState(0);
 
@@ -29,7 +33,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-        অ্যাডমিন ড্যাশবোর্ড
+        {isSuperAdmin ? "সুপার অ্যাডমিন ড্যাশবোর্ড" : "অ্যাডমিন ড্যাশবোর্ড"}
       </h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STATS.map(({ key, label, icon: Icon }) => (

@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabaseClient";
 import { ROUTES } from "@/constants/routes";
+import { ROLES } from "@/constants/roles";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -21,14 +23,38 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-    const { error } = await signIn(email, password);
+    const { data, error } = await signIn(email, password);
     setSubmitting(false);
     if (error) {
       setError("ইমেইল অথবা পাসওয়ার্ড সঠিক নয়।");
       return;
     }
-    const redirectTo = location.state?.from?.pathname || ROUTES.HOME;
-    navigate(redirectTo, { replace: true });
+
+    // যদি কোনো Protected route থেকে redirect হয়ে এখানে আসা হয়ে থাকে, সেই
+    // পুরনো আচরণটাই বজায় রাখা হচ্ছে (আগে যেখানে যেতে চেয়েছিল সেখানেই ফেরত পাঠানো)।
+    const redirectFrom = location.state?.from?.pathname;
+    if (redirectFrom) {
+      navigate(redirectFrom, { replace: true });
+      return;
+    }
+
+    // অন্যথায় role অনুযায়ী সঠিক ড্যাশবোর্ডে পাঠানো হচ্ছে — visitor/সাধারণ ইউজার
+    // আগের মতোই Home page-এ যাবে।
+    let destination = ROUTES.HOME;
+    const userId = data?.user?.id;
+    if (userId) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      if (profile?.role === ROLES.SELLER) {
+        destination = ROUTES.DASHBOARD;
+      } else if (profile?.role === ROLES.ADMIN || profile?.role === ROLES.SUPER_ADMIN) {
+        destination = ROUTES.ADMIN;
+      }
+    }
+    navigate(destination, { replace: true });
   };
 
   return (

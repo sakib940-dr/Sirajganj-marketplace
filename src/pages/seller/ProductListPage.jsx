@@ -6,13 +6,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
+import PendingApprovalNotice from "@/components/seller/PendingApprovalNotice.jsx";
 import { ROUTES, editProductPath } from "@/constants/routes";
 import { formatPriceBn, getDiscountedPrice } from "@/lib/utils";
+import { ROLES, SELLER_STATUS, isAdminOrAbove } from "@/constants/roles";
 
 const MAX_PRODUCTS_PER_SHOP = 50;
 
 export default function ProductListPage() {
-  const { user } = useAuth();
+  const { user, role, sellerStatus } = useAuth();
+  const isApprovedSeller =
+    isAdminOrAbove(role) || (role === ROLES.SELLER && sellerStatus === SELLER_STATUS.APPROVED);
   const [products, setProducts] = useState([]);
   const [shopId, setShopId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,8 +42,9 @@ export default function ProductListPage() {
   }, [user]);
 
   useEffect(() => {
-    if (user) load();
-  }, [user, load]);
+    if (user && isApprovedSeller) load();
+    else setLoading(false);
+  }, [user, load, isApprovedSeller]);
 
   const toggleActive = async (product) => {
     setBusyId(product.id);
@@ -62,6 +67,8 @@ export default function ProductListPage() {
     if (!error) setProducts((prev) => prev.filter((p) => p.id !== id));
     setBusyId(null);
   };
+
+  if (!isApprovedSeller) return <PendingApprovalNotice status={sellerStatus} />;
 
   if (loading) return <LoadingSpinner label="পণ্য লোড হচ্ছে..." />;
 

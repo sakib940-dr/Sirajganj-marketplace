@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import ImageUploader from "@/components/shared/ImageUploader.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
+import PendingApprovalNotice from "@/components/seller/PendingApprovalNotice.jsx";
 import { ROUTES } from "@/constants/routes";
+import { ROLES, SELLER_STATUS, isAdminOrAbove } from "@/constants/roles";
 
 const EMPTY_PRODUCT = {
   name: "",
@@ -33,8 +35,10 @@ export default function ProductEditPage() {
   const { id } = useParams();
   const isEditing = !!id;
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role, sellerStatus } = useAuth();
   const { categories } = useCategories();
+  const isApprovedSeller =
+    isAdminOrAbove(role) || (role === ROLES.SELLER && sellerStatus === SELLER_STATUS.APPROVED);
 
   const [shopId, setShopId] = useState(null);
   const [product, setProduct] = useState(EMPTY_PRODUCT);
@@ -184,6 +188,8 @@ export default function ProductEditPage() {
     await supabase.from("product_images").delete().eq("id", imgId);
     setExtraImages((prev) => prev.filter((i) => i.id !== imgId));
   };
+
+  if (!isApprovedSeller) return <PendingApprovalNotice status={sellerStatus} />;
 
   if (loading) return <LoadingSpinner label="লোড হচ্ছে..." />;
 
