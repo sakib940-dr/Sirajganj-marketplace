@@ -11,6 +11,8 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import { useCategories } from "@/hooks/useCategories";
 import { useShops } from "@/hooks/useShops";
 import { useLatestProducts } from "@/hooks/useProducts";
+import { useBanners } from "@/hooks/useBanners";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { ROUTES } from "@/constants/routes";
 
 export default function HomePage() {
@@ -20,6 +22,8 @@ export default function HomePage() {
   const { categories, loading: catLoading } = useCategories();
   const { shops, loading: shopLoading } = useShops({ limit: 6 });
   const { products, loading: productLoading } = useLatestProducts({ limit: 8 });
+  const { banners } = useBanners();
+  const { settings } = useSiteSettings();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -68,6 +72,34 @@ export default function HomePage() {
         </div>
         <div className="kantha-divider" />
       </section>
+
+      {/* Admin Banners (থাকলে) */}
+      {banners.length > 0 && (
+        <section className="container -mt-8 relative z-10">
+          <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
+            {banners.map((banner) =>
+              banner.link_url ? (
+                <a
+                  key={banner.id}
+                  href={banner.link_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block h-36 w-full shrink-0 snap-center overflow-hidden rounded-xl border border-border shadow-md sm:h-44"
+                >
+                  <img src={banner.image_url} alt={banner.title || ""} className="h-full w-full object-cover" />
+                </a>
+              ) : (
+                <div
+                  key={banner.id}
+                  className="h-36 w-full shrink-0 snap-center overflow-hidden rounded-xl border border-border shadow-md sm:h-44"
+                >
+                  <img src={banner.image_url} alt={banner.title || ""} className="h-full w-full object-cover" />
+                </div>
+              )
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Categories */}
       <section className="container py-12 md:py-16">

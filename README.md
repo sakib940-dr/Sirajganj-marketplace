@@ -113,10 +113,25 @@ src/
 
 - ✅ Phase 0 — Project Setup
 - ✅ Phase 1 — Database, RLS, Authentication (email + phone সহ Registration)
-- ✅ Phase 2 — Public Website (Homepage, Category, Shop, Product, Search, WhatsApp Buy বাটন)
+- ✅ Phase 2 — Public Website (Homepage + Admin Banner, Category, Shop, Product, Search, WhatsApp Buy বাটন)
 - ✅ Phase 3 — Seller Dashboard (Shop Info, Product CRUD, Gallery — সবই কার্যকর, ছবি আপলোডে ১০০ KB সীমা)
-- ✅ Phase 4 — Admin Panel (User Management, Seller Approval, Category, Product, Banner, Site Settings — সবই কার্যকর)
-- ⬜ Phase 5 — Polish, Full Responsive QA ও Final Deployment Testing
+- ✅ Phase 4 — Admin Panel (User Management + Password Reset, Seller Approval, Category, Product, Banner, Site Settings — সবই কার্যকর ও Header/Footer-এ প্রতিফলিত)
+- ⬜ Phase 5 — Polish, Full Responsive QA
+
+## ৮.১ Demo Data (Seed) — অ্যাপে কিছু না দেখালে
+
+`supabase/migrations/0003_seed_demo_data.sql` রান করলে তৈরি হবে:
+- ৬টি সাধারণ Category (ফ্যাশন, ইলেকট্রনিক্স, খাবার, ঘর সাজানো, স্বাস্থ্য-সৌন্দর্য, বই)
+- ২টি Demo Seller অ্যাকাউন্ট (ইতিমধ্যে Approved) তাদের Shop-সহ
+- প্রতি Shop-এ ৩টি করে Demo Product
+
+**Demo Login:**
+| ইমেইল | পাসওয়ার্ড |
+|---|---|
+| demo.seller1@example.com | DemoPass123 |
+| demo.seller2@example.com | DemoPass123 |
+
+এটি চালানোর পর Homepage-এ Category/Shop/Product দেখা যাবে এবং Admin Dashboard-এর Stats-এ সংখ্যা দেখাবে। **এগুলো শুধু Demo-এর জন্য** — আসল সেলার যোগ হওয়া শুরু করলে "ব্যবহারকারী ম্যানেজমেন্ট" বা "সেলার ম্যানেজমেন্ট" পেজ থেকে demo সেলার দুটো মুছে ফেলতে পারবেন।
 
 ## ৮. গুরুত্বপূর্ণ নিরাপত্তা নোট
 

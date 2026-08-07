@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Store } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export default function Footer() {
+  const { settings } = useSiteSettings();
   return (
     <footer className="mt-20 border-t border-border bg-primary text-primary-foreground">
       <div className="container grid gap-8 py-12 md:grid-cols-3">
@@ -12,11 +14,11 @@ export default function Footer() {
               <Store className="h-5 w-5" />
             </span>
             <span className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-              বাজার
+              {settings.site_name}
             </span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-primary-foreground/70">
-            আপনার এলাকার সব দোকান, সব পণ্য — এক জায়গায়। স্থানীয় ব্যবসাকে ডিজিটাল পরিচিতি দিতে বাজার।
+            আপনার এলাকার সব দোকান, সব পণ্য — এক জায়গায়। স্থানীয় ব্যবসাকে ডিজিটাল পরিচিতি দিতে {settings.site_name}।
           </p>
         </div>
 
@@ -31,11 +33,17 @@ export default function Footer() {
 
         <div>
           <h4 className="mb-3 text-sm font-semibold text-accent">যোগাযোগ</h4>
-          <p className="text-sm text-primary-foreground/80">সিরাজগঞ্জ, রাজশাহী বিভাগ, বাংলাদেশ</p>
+          <p className="text-sm text-primary-foreground/80">{settings.footer_address}</p>
+          {settings.contact_phone && (
+            <p className="mt-1 text-sm text-primary-foreground/80">{settings.contact_phone}</p>
+          )}
+          {settings.contact_email && (
+            <p className="mt-1 text-sm text-primary-foreground/80">{settings.contact_email}</p>
+          )}
         </div>
       </div>
       <div className="border-t border-primary-foreground/10 py-4 text-center text-xs text-primary-foreground/60">
-        © {new Date().getFullYear()} বাজার। সর্বস্বত্ব সংরক্ষিত।
+        © {new Date().getFullYear()} {settings.site_name}। সর্বস্বত্ব সংরক্ষিত।
       </div>
     </footer>
   );

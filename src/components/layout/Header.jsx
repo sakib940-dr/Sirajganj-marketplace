@@ -4,6 +4,7 @@ import { Search, Menu, X, Store, LayoutDashboard, ShieldCheck } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { ROUTES } from "@/constants/routes";
 import { ROLES } from "@/constants/roles";
 
@@ -11,6 +12,7 @@ export default function Header() {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isLoggedIn, role, signOut } = useAuth();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
 
   const handleSearch = (e) => {
@@ -30,7 +32,7 @@ export default function Header() {
             <Store className="h-5 w-5" />
           </span>
           <span className="text-xl font-bold text-primary" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-            বাজার
+            {settings.site_name}
           </span>
         </Link>
 
