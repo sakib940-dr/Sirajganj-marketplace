@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PendingApprovalNotice from "@/components/seller/PendingApprovalNotice.jsx";
 import { ROUTES } from "@/constants/routes";
-import { ROLES, SELLER_STATUS } from "@/constants/roles";
+import { ROLES, SELLER_STATUS, isAdminOrAbove } from "@/constants/roles";
 
 export default function DashboardHome() {
   const { user, role, sellerStatus, profile } = useAuth();
@@ -14,7 +14,7 @@ export default function DashboardHome() {
   const [hasShop, setHasShop] = useState(null);
 
   const isApprovedSeller =
-    role === ROLES.SUPER_ADMIN || (role === ROLES.SELLER && sellerStatus === SELLER_STATUS.APPROVED);
+    isAdminOrAbove(role) || (role === ROLES.SELLER && sellerStatus === SELLER_STATUS.APPROVED);
 
   useEffect(() => {
     if (!isApprovedSeller || !user) return;

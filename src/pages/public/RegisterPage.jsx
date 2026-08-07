@@ -129,7 +129,7 @@ export default function RegisterPage() {
                 onChange={(e) => setWantsSeller(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded border-input accent-primary"
               />
-              আমি আমার দোকান খুলতে চাই (সেলার হওয়ার আবেদন করুন — সুপার অ্যাডমিন অনুমোদন করবেন)
+              আমি আমার দোকান খুলতে চাই (সেলার হওয়ার আবেদন করুন — অ্যাডমিন অনুমোদন করবেন)
             </label>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={submitting}>

@@ -1,33 +1,52 @@
 import { useEffect, useState, useCallback } from "react";
-import { ShieldPlus, ShieldMinus, Users, KeyRound, Copy, Check, X } from "lucide-react";
+import {
+  Users,
+  X,
+  Ban,
+  ShieldCheck,
+  Trash2,
+  MapPin,
+  Facebook,
+  Map as MapIcon,
+  Phone,
+  BadgeCheck,
+  Loader2,
+  UserCircle2,
+} from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import { formatDateBn } from "@/lib/utils";
+import {
+  ROLES,
+  ROLE_LABEL_BN,
+  ACCOUNT_STATUS,
+  ACCOUNT_STATUS_LABEL_BN,
+  VERIFICATION_STATUS_LABEL_BN,
+} from "@/constants/roles";
 
-const ROLE_LABEL_BN = {
-  visitor: "ভিজিটর",
-  seller: "সেলার",
-  super_admin: "সুপার অ্যাডমিন",
+const ROLE_BADGE_CLASS = {
+  [ROLES.SUPER_ADMIN]: "bg-primary/10 text-primary",
+  [ROLES.ADMIN]: "bg-accent/15 text-accent",
+  [ROLES.SELLER]: "bg-secondary text-foreground/80",
+  [ROLES.VISITOR]: "bg-muted text-muted-foreground",
 };
 
-function generatePassword() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let pass = "";
-  for (let i = 0; i < 10; i++) pass += chars[Math.floor(Math.random() * chars.length)];
-  return pass;
-}
+const ROLE_OPTIONS = [ROLES.VISITOR, ROLES.SELLER, ROLES.ADMIN, ROLES.SUPER_ADMIN];
 
 export default function UserManagePage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, role: myRole } = useAuth();
+  const isSuperAdmin = myRole === ROLES.SUPER_ADMIN;
+
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState(null);
-  const [resetResult, setResetResult] = useState(null); // { name, password }
-  const [resetError, setResetError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [selected, setSelected] = useState(null); // profile row that was clicked
+  const [detail, setDetail] = useState(null); // { verification, shop }
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,48 +59,116 @@ export default function UserManagePage() {
     load();
   }, [load]);
 
-  const toggleAdmin = async (profile) => {
-    setBusyId(profile.id);
-    const newRole = profile.role === "super_admin" ? "visitor" : "super_admin";
-    const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", profile.id);
-    if (!error) {
-      setProfiles((prev) => prev.map((p) => (p.id === profile.id ? { ...p, role: newRole } : p)));
-    }
-    setBusyId(null);
+  const openDetail = async (profile) => {
+    setSelected(profile);
+    setActionError("");
+    setDetail(null);
+    setDetailLoading(true);
+
+    const [{ data: verification }, { data: shop }] = await Promise.all([
+      supabase.from("seller_verifications").select("*").eq("user_id", profile.id).maybeSingle(),
+      supabase.from("shops").select("*").eq("owner_id", profile.id).maybeSingle(),
+    ]);
+
+    setDetail({ verification: verification ?? null, shop: shop ?? null });
+    setDetailLoading(false);
   };
 
-  const handleResetPassword = async (profile) => {
+  const closeDetail = () => {
+    setSelected(null);
+    setDetail(null);
+    setActionError("");
+  };
+
+  const patchLocal = (id, patch) => {
+    setProfiles((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    setSelected((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
+  };
+
+  const changeRole = async (newRole) => {
+    if (!selected) return;
     if (
       !window.confirm(
-        `"${profile.full_name || profile.email}" এর পাসওয়ার্ড রিসেট করতে চান? পুরনো পাসওয়ার্ড আর কাজ করবে না — নতুন একটি পাসওয়ার্ড তৈরি হবে যা আপনাকে সেলারকে জানাতে হবে।`
+        `"${selected.full_name || selected.email}"-এর role "${ROLE_LABEL_BN[newRole]}"-এ পরিবর্তন করতে চান?`
+      )
+    )
+      return;
+    setBusy(true);
+    setActionError("");
+    const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", selected.id);
+    setBusy(false);
+    if (error) {
+      setActionError(error.message);
+      return;
+    }
+    patchLocal(selected.id, { role: newRole });
+  };
+
+  const toggleBan = async () => {
+    if (!selected) return;
+    const nextAction = selected.account_status === ACCOUNT_STATUS.BANNED ? "unban" : "ban";
+    if (
+      !window.confirm(
+        nextAction === "ban"
+          ? `"${selected.full_name || selected.email}"-কে ব্যান করতে চান? এই ইউজার আর লগইন করতে পারবে না।`
+          : `"${selected.full_name || selected.email}"-এর ব্যান তুলে নিতে চান?`
       )
     )
       return;
 
-    setBusyId(profile.id);
-    setResetError("");
-    const newPassword = generatePassword();
-
-    const { data, error } = await supabase.functions.invoke("admin-reset-password", {
-      body: { userId: profile.id, newPassword },
+    setBusy(true);
+    setActionError("");
+    const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+      body: { userId: selected.id, action: nextAction },
     });
-
-    setBusyId(null);
-
+    setBusy(false);
     if (error || data?.error) {
-      setResetError(data?.error || error.message || "পাসওয়ার্ড রিসেট ব্যর্থ হয়েছে।");
+      setActionError(data?.error || error.message || "কাজটি ব্যর্থ হয়েছে।");
       return;
     }
-
-    // এই পাসওয়ার্ড কোথাও সংরক্ষণ করা হয় না — শুধু একবার এখানে দেখানো হচ্ছে,
-    // যাতে আপনি এখনই কপি করে সেলারকে (নিরাপদ চ্যানেলে) পাঠিয়ে দিতে পারেন
-    setResetResult({ name: profile.full_name || profile.email, password: newPassword });
+    patchLocal(selected.id, {
+      account_status: nextAction === "ban" ? ACCOUNT_STATUS.BANNED : ACCOUNT_STATUS.ACTIVE,
+    });
   };
 
-  const copyPassword = () => {
-    navigator.clipboard.writeText(resetResult.password);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const deleteUser = async () => {
+    if (!selected) return;
+    if (
+      !window.confirm(
+        `"${selected.full_name || selected.email}"-কে সম্পূর্ণভাবে মুছে ফেলতে চান? এই কাজটি ফিরিয়ে নেওয়া যাবে না।`
+      )
+    )
+      return;
+
+    setBusy(true);
+    setActionError("");
+    const { data, error } = await supabase.functions.invoke("admin-manage-user", {
+      body: { userId: selected.id, action: "delete" },
+    });
+    setBusy(false);
+    if (error || data?.error) {
+      setActionError(data?.error || error.message || "ডিলিট ব্যর্থ হয়েছে।");
+      return;
+    }
+    setProfiles((prev) => prev.filter((p) => p.id !== selected.id));
+    closeDetail();
+  };
+
+  const updateMaxProducts = async (value) => {
+    if (!detail?.shop) return;
+    setBusy(true);
+    setActionError("");
+    const parsed = value === "" ? null : Math.max(1, parseInt(value, 10) || 1);
+    const { error } = await supabase
+      .from("shops")
+      .update({ max_products_override: parsed })
+      .eq("id", detail.shop.id);
+    setBusy(false);
+    if (error) {
+      setActionError(error.message);
+      return;
+    }
+    setDetail((prev) => ({ ...prev, shop: { ...prev.shop, max_products_override: parsed } }));
   };
 
   if (loading) return <LoadingSpinner label="ইউজার তালিকা লোড হচ্ছে..." />;
@@ -94,95 +181,213 @@ export default function UserManagePage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-          ব্যবহারকারী ম্যানেজমেন্ট
+          ইউজার (রোলসহ)
         </h1>
         <p className="text-sm text-muted-foreground">
-          সব রেজিস্টার্ড ইউজারের তথ্য — নিরাপত্তার জন্য পাসওয়ার্ড কখনো ডাটাবেসে সংরক্ষিত/দৃশ্যমান থাকে না
+          একজন ইউজারে ক্লিক করলে বিস্তারিত তথ্য দেখা যাবে
+          {!isSuperAdmin && " — role পরিবর্তন, ব্যান/আনব্যান বা ডিলিট শুধুমাত্র Super Admin করতে পারবেন"}
         </p>
       </div>
-
-      {resetResult && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-accent bg-accent/10 p-4">
-          <div>
-            <p className="text-sm font-medium">
-              {resetResult.name}-এর নতুন পাসওয়ার্ড তৈরি হয়েছে — এখনই কপি করে নিন, পরে আর দেখা যাবে না:
-            </p>
-            <p className="mt-1 rounded bg-card px-3 py-1.5 font-mono text-base font-semibold tracking-wide">
-              {resetResult.password}
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="outline" onClick={copyPassword}>
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied ? "কপি হয়েছে" : "কপি করুন"}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setResetResult(null)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {resetError && <p className="text-sm text-destructive">{resetError}</p>}
 
       <div className="overflow-x-auto rounded-xl border border-border bg-card">
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-secondary/50 text-left">
             <tr>
+              <th className="p-3 font-medium">প্রোফাইল</th>
               <th className="p-3 font-medium">নাম</th>
-              <th className="p-3 font-medium">ইমেইল</th>
               <th className="p-3 font-medium">ফোন</th>
               <th className="p-3 font-medium">রোল</th>
-              <th className="p-3 font-medium">যোগদান</th>
-              <th className="p-3 font-medium">অ্যাকশন</th>
+              <th className="p-3 font-medium">অ্যাকাউন্ট অবস্থা</th>
             </tr>
           </thead>
           <tbody>
             {profiles.map((p) => (
-              <tr key={p.id} className="border-b border-border last:border-0">
-                <td className="p-3">{p.full_name || "—"}</td>
-                <td className="p-3 text-muted-foreground">{p.email || "—"}</td>
+              <tr
+                key={p.id}
+                onClick={() => openDetail(p)}
+                className="cursor-pointer border-b border-border last:border-0 hover:bg-secondary/40"
+              >
+                <td className="p-3">
+                  <UserCircle2 className="h-8 w-8 text-muted-foreground" />
+                </td>
+                <td className="p-3">
+                  {p.full_name || "—"} {p.id === currentUser.id && <span className="text-xs text-muted-foreground">(আপনি)</span>}
+                </td>
                 <td className="p-3 text-muted-foreground">{p.phone || "—"}</td>
                 <td className="p-3">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                      p.role === "super_admin"
-                        ? "bg-primary/10 text-primary"
-                        : p.role === "seller"
-                        ? "bg-accent/15 text-accent"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ROLE_BADGE_CLASS[p.role] || ROLE_BADGE_CLASS[ROLES.VISITOR]}`}>
                     {ROLE_LABEL_BN[p.role] || p.role}
                   </span>
                 </td>
-                <td className="p-3 text-muted-foreground">{formatDateBn(p.created_at)}</td>
                 <td className="p-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {p.id === currentUser.id ? (
-                      <span className="text-xs text-muted-foreground">(আপনি)</span>
-                    ) : (
-                      <>
-                        {p.role === "super_admin" ? (
-                          <Button size="sm" variant="outline" disabled={busyId === p.id} onClick={() => toggleAdmin(p)}>
-                            <ShieldMinus className="h-4 w-4" /> অ্যাডমিন সরান
-                          </Button>
-                        ) : (
-                          <Button size="sm" variant="default" disabled={busyId === p.id} onClick={() => toggleAdmin(p)}>
-                            <ShieldPlus className="h-4 w-4" /> অ্যাডমিন বানান
-                          </Button>
-                        )}
-                        <Button size="sm" variant="outline" disabled={busyId === p.id} onClick={() => handleResetPassword(p)}>
-                          <KeyRound className="h-4 w-4" /> পাসওয়ার্ড রিসেট
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                      p.account_status === ACCOUNT_STATUS.BANNED
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    {ACCOUNT_STATUS_LABEL_BN[p.account_status] || ACCOUNT_STATUS_LABEL_BN[ACCOUNT_STATUS.ACTIVE]}
+                  </span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeDetail}>
+          <div
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-card p-5 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {detail?.verification?.profile_photo_url ? (
+                  <img
+                    src={detail.verification.profile_photo_url}
+                    alt={selected.full_name || ""}
+                    className="h-14 w-14 rounded-full object-cover"
+                  />
+                ) : (
+                  <UserCircle2 className="h-14 w-14 text-muted-foreground" />
+                )}
+                <div>
+                  <h2 className="text-lg font-bold">{selected.full_name || "নাম নেই"}</h2>
+                  <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[selected.role]}`}>
+                    {ROLE_LABEL_BN[selected.role] || selected.role}
+                  </span>
+                </div>
+              </div>
+              <Button size="sm" variant="ghost" onClick={closeDetail}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {detailLoading ? (
+              <LoadingSpinner label="তথ্য লোড হচ্ছে..." />
+            ) : (
+              <div className="space-y-3 text-sm">
+                <DetailRow icon={Phone} label="ফোন নম্বর" value={selected.phone || detail?.verification?.phone} />
+                <DetailRow icon={MapPin} label="ঠিকানা" value={detail?.verification?.address || detail?.shop?.address} />
+                <DetailRow
+                  icon={MapIcon}
+                  label="গুগল ম্যাপ লোকেশন"
+                  value={detail?.verification?.google_map_link || detail?.shop?.google_map_link}
+                  isLink
+                />
+                <DetailRow
+                  icon={Facebook}
+                  label="ফেসবুক প্রোফাইল"
+                  value={detail?.verification?.facebook_link || detail?.shop?.facebook_link}
+                  isLink
+                />
+                <DetailRow
+                  icon={BadgeCheck}
+                  label="সেলার ভেরিফিকেশন"
+                  value={
+                    detail?.verification
+                      ? VERIFICATION_STATUS_LABEL_BN[detail.verification.status]
+                      : "জমা দেওয়া হয়নি"
+                  }
+                />
+                <DetailRow label="যোগদান" value={formatDateBn(selected.created_at)} />
+                <DetailRow
+                  label="অ্যাকাউন্ট অবস্থা"
+                  value={ACCOUNT_STATUS_LABEL_BN[selected.account_status] || ACCOUNT_STATUS_LABEL_BN[ACCOUNT_STATUS.ACTIVE]}
+                />
+
+                {detail?.shop && (
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="mb-1 font-medium">দোকান: {detail.shop.shop_name}</p>
+                    {isSuperAdmin ? (
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted-foreground">সর্বোচ্চ পণ্যের সীমা:</label>
+                        <input
+                          type="number"
+                          min={1}
+                          disabled={busy}
+                          defaultValue={detail.shop.max_products_override ?? ""}
+                          placeholder="৫০ (ডিফল্ট)"
+                          className="w-24 rounded border border-border bg-background px-2 py-1 text-xs"
+                          onBlur={(e) => updateMaxProducts(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        সর্বোচ্চ পণ্যের সীমা: {detail.shop.max_products_override ?? 50}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+
+                {selected.id === currentUser.id ? (
+                  <p className="text-xs text-muted-foreground">(এটি আপনার নিজের অ্যাকাউন্ট)</p>
+                ) : isSuperAdmin ? (
+                  <div className="space-y-3 border-t border-border pt-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">Role পরিবর্তন করুন</label>
+                      <select
+                        disabled={busy}
+                        value={selected.role}
+                        onChange={(e) => changeRole(e.target.value)}
+                        className="w-full rounded border border-border bg-background px-2 py-1.5 text-sm"
+                      >
+                        {ROLE_OPTIONS.map((r) => (
+                          <option key={r} value={r}>
+                            {ROLE_LABEL_BN[r]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" disabled={busy} onClick={toggleBan}>
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : selected.account_status === ACCOUNT_STATUS.BANNED ? (
+                          <ShieldCheck className="h-4 w-4" />
+                        ) : (
+                          <Ban className="h-4 w-4" />
+                        )}
+                        {selected.account_status === ACCOUNT_STATUS.BANNED ? "আনব্যান করুন" : "ব্যান করুন"}
+                      </Button>
+                      <Button size="sm" variant="destructive" disabled={busy} onClick={deleteUser}>
+                        <Trash2 className="h-4 w-4" /> ডিলিট করুন
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+                    Role পরিবর্তন, ব্যান/আনব্যান বা ডিলিট করার অনুমতি শুধুমাত্র Super Admin-এর আছে।
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailRow({ icon: Icon, label, value, isLink }) {
+  return (
+    <div className="flex items-start gap-2">
+      {Icon && <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />}
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {value ? (
+          isLink ? (
+            <a href={value} target="_blank" rel="noreferrer" className="break-all text-primary underline">
+              {value}
+            </a>
+          ) : (
+            <p className="break-words">{value}</p>
+          )
+        ) : (
+          <p className="text-muted-foreground">—</p>
+        )}
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ import SellerVerificationPage from "@/pages/seller/SellerVerificationPage.jsx";
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard.jsx";
 import UserManagePage from "@/pages/admin/UserManagePage.jsx";
+import CredentialsPage from "@/pages/admin/CredentialsPage.jsx";
 import SellerManagePage from "@/pages/admin/SellerManagePage.jsx";
 import SellerVerificationManagePage from "@/pages/admin/SellerVerificationManagePage.jsx";
 import CategoryManagePage from "@/pages/admin/CategoryManagePage.jsx";
@@ -69,16 +70,24 @@ export default function AppRoutes() {
         <Route path={ROUTES.DASHBOARD_VERIFICATION} element={<SellerVerificationPage />} />
       </Route>
 
-      {/* Admin (protected, role: super_admin) */}
+      {/* Admin Panel (protected, role: admin অথবা super_admin) */}
       <Route
         element={
-          <ProtectedRoute requiredRole={ROLES.SUPER_ADMIN}>
+          <ProtectedRoute requiredRole={ROLES.ADMIN}>
             <AdminLayout />
           </ProtectedRoute>
         }
       >
         <Route path={ROUTES.ADMIN} element={<AdminDashboard />} />
         <Route path={ROUTES.ADMIN_USERS} element={<UserManagePage />} />
+        <Route
+          path={ROUTES.ADMIN_CREDENTIALS}
+          element={
+            <ProtectedRoute requiredRole={ROLES.SUPER_ADMIN}>
+              <CredentialsPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path={ROUTES.ADMIN_SELLERS} element={<SellerManagePage />} />
         <Route path={ROUTES.ADMIN_VERIFICATIONS} element={<SellerVerificationManagePage />} />
         <Route path={ROUTES.ADMIN_CATEGORIES} element={<CategoryManagePage />} />

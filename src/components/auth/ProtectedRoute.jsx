@@ -1,16 +1,19 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/constants/routes";
-import { ROLES } from "@/constants/roles";
+import { ROLES, isAdminOrAbove } from "@/constants/roles";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 /**
- * @param {"seller" | "super_admin"} requiredRole - এই role না থাকলে Home-এ পাঠিয়ে দেয়
+ * @param {"seller" | "admin" | "super_admin"} requiredRole
+ *   - "seller": seller (বা admin/super_admin) হতে হবে
+ *   - "admin": Admin Panel অ্যাক্সেসের জন্য — role admin অথবা super_admin হলেই চলবে
+ *   - "super_admin": শুধুমাত্র আসল Super Admin — Admin-ও ঢুকতে পারবে না
  * @param {boolean} allowPendingSeller - true হলে seller_status !== approved থাকা সত্ত্বেও render হবে
  *   (Dashboard-এর ভেতরে "Pending Approval" বার্তা দেখানোর জন্য দরকার হয়)
  */
 export default function ProtectedRoute({ children, requiredRole, allowPendingSeller = false }) {
-  const { isLoggedIn, role, sellerStatus, loading } = useAuth();
+  const { isLoggedIn, role, sellerStatus, accountStatus, loading, signOut } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -21,12 +24,22 @@ export default function ProtectedRoute({ children, requiredRole, allowPendingSel
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
+  // ব্যান করা অ্যাকাউন্ট কোনো protected এলাকায় ঢুকতে পারবে না
+  if (accountStatus === "banned") {
+    signOut();
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
+
   if (requiredRole === ROLES.SUPER_ADMIN && role !== ROLES.SUPER_ADMIN) {
+    return <Navigate to={ROUTES.ADMIN} replace />;
+  }
+
+  if (requiredRole === ROLES.ADMIN && !isAdminOrAbove(role)) {
     return <Navigate to={ROUTES.HOME} replace />;
   }
 
   if (requiredRole === ROLES.SELLER) {
-    const isSellerOrAdmin = role === ROLES.SELLER || role === ROLES.SUPER_ADMIN;
+    const isSellerOrAdmin = role === ROLES.SELLER || isAdminOrAbove(role);
     if (!isSellerOrAdmin) {
       return <Navigate to={ROUTES.HOME} replace />;
     }

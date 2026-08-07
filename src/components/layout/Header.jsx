@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { ROUTES } from "@/constants/routes";
-import { ROLES } from "@/constants/roles";
+import { ROLES, isAdminOrAbove } from "@/constants/roles";
 
 export default function Header() {
   const [query, setQuery] = useState("");
@@ -49,7 +49,7 @@ export default function Header() {
         <div className="ml-auto hidden items-center gap-2 md:flex">
           {isLoggedIn ? (
             <>
-              {role === ROLES.SUPER_ADMIN && (
+              {isAdminOrAbove(role) && (
                 <Button variant="ghost" size="sm" asChild>
                   <Link to={ROUTES.ADMIN}>
                     <ShieldCheck className="h-4 w-4" />
@@ -101,7 +101,7 @@ export default function Header() {
           </form>
           {isLoggedIn ? (
             <>
-              {role === ROLES.SUPER_ADMIN && (
+              {isAdminOrAbove(role) && (
                 <Link to={ROUTES.ADMIN} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
                   অ্যাডমিন প্যানেল
                 </Link>

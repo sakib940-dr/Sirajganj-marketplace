@@ -19,6 +19,7 @@ export const ROUTES = {
 
   ADMIN: "/admin",
   ADMIN_USERS: "/admin/users",
+  ADMIN_CREDENTIALS: "/admin/credentials",
   ADMIN_SELLERS: "/admin/sellers",
   ADMIN_VERIFICATIONS: "/admin/verifications",
   ADMIN_CATEGORIES: "/admin/categories",

@@ -115,6 +115,7 @@ export function AuthProvider({ children }) {
     profile,
     role: profile?.role ?? "visitor",
     sellerStatus: profile?.seller_status ?? "none",
+    accountStatus: profile?.account_status ?? "active",
     isLoggedIn: !!session?.user,
     loading,
     signIn,
