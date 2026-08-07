@@ -118,6 +118,12 @@ src/
 - ✅ Phase 4 — Admin Panel (User Management + Password Reset, Seller Approval, Category, Product, Banner, Site Settings — সবই কার্যকর ও Header/Footer-এ প্রতিফলিত)
 - ⬜ Phase 5 — Polish, Full Responsive QA
 
+## ৮.০ Phase 5 আপডেট
+- ✅ Favicon যোগ হয়েছে
+- ✅ Forgot Password / Reset Password ফ্লো (সেলার/ভিজিটর নিজেই ইমেইল দিয়ে reset করতে পারবে, Login পেজে লিংক আছে)
+- ⬜ আসল মোবাইল ফোনে টেস্টিং (deploy করার পর নিজে যাচাই করে নিন)
+- ⬜ আসল Subdomain routing (`shopname.yoursite.com`) — চাইলে ভবিষ্যতে যোগ করা যাবে, Vercel Wildcard Domain + DNS লাগবে
+
 ## ৮.১ Demo Data (Seed) — অ্যাপে কিছু না দেখালে
 
 `supabase/migrations/0003_seed_demo_data.sql` রান করলে তৈরি হবে:

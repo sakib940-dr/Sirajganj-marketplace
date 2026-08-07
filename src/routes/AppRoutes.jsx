@@ -14,6 +14,8 @@ import ProductPage from "@/pages/public/ProductPage.jsx";
 import SearchResultPage from "@/pages/public/SearchResultPage.jsx";
 import LoginPage from "@/pages/public/LoginPage.jsx";
 import RegisterPage from "@/pages/public/RegisterPage.jsx";
+import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "@/pages/public/ResetPasswordPage.jsx";
 import NotFoundPage from "@/pages/public/NotFoundPage.jsx";
 
 // Seller
@@ -44,6 +46,8 @@ export default function AppRoutes() {
         <Route path={ROUTES.SEARCH} element={<SearchResultPage />} />
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+        <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
       </Route>
 
       {/* Seller (protected, role: seller — pending seller-রাও ঢুকতে পারবে যাতে Pending নোটিশ দেখতে পায়) */}

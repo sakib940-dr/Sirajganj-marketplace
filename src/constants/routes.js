@@ -6,6 +6,8 @@ export const ROUTES = {
   SEARCH: "/search",
   LOGIN: "/login",
   REGISTER: "/register",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
 
   DASHBOARD: "/dashboard",
   DASHBOARD_SHOP: "/dashboard/shop",

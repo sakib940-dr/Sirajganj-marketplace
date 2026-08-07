@@ -55,7 +55,12 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">পাসওয়ার্ড</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">পাসওয়ার্ড</Label>
+                <Link to={ROUTES.FORGOT_PASSWORD} className="text-xs font-medium text-primary hover:underline">
+                  পাসওয়ার্ড ভুলে গেছেন?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
