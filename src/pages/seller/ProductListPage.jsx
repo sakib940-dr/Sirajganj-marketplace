@@ -127,6 +127,7 @@ export default function ProductListPage() {
               <tr>
                 <th className="p-3 font-medium">পণ্য</th>
                 <th className="p-3 font-medium">মূল্য</th>
+                <th className="p-3 font-medium">স্টক / বিক্রি</th>
                 <th className="p-3 font-medium">অবস্থা</th>
                 <th className="p-3 font-medium">অ্যাকশন</th>
               </tr>
@@ -151,6 +152,20 @@ export default function ProductListPage() {
                     ) : (
                       formatPriceBn(p.price)
                     )}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex flex-col gap-0.5 text-xs">
+                      <span
+                        className={
+                          Number(p.stock_quantity ?? 0) <= 0
+                            ? "font-medium text-destructive"
+                            : "font-medium text-foreground"
+                        }
+                      >
+                        স্টক: {p.stock_quantity ?? 0}
+                      </span>
+                      <span className="text-muted-foreground">বিক্রি: {p.sold_count ?? 0}</span>
+                    </div>
                   </td>
                   <td className="p-3">
                     <span

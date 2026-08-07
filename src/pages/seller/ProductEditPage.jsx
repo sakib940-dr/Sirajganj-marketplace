@@ -25,9 +25,13 @@ const EMPTY_PRODUCT = {
   is_active: true,
   discount_type: "none",
   discount_value: "",
+  stock_quantity: "",
+  sold_count: "",
 };
 
-const PRODUCT_IMAGE_MAX_KB = 200;
+const PRODUCT_IMAGE_MAX_KB = 1024; // ১ MB পর্যন্ত সিলেক্ট করা যাবে, স্বয়ংক্রিয়ভাবে কমপ্রেস হয়ে যাবে
+const PRODUCT_IMAGE_COMPRESS_MIN_KB = 100;
+const PRODUCT_IMAGE_COMPRESS_MAX_KB = 200;
 const MAX_PRODUCTS_PER_SHOP = 50;
 const MAX_EXTRA_IMAGES = 3; // + ১টি মূল ছবি = সর্বোচ্চ ৪টি
 
@@ -66,7 +70,14 @@ export default function ProductEditPage() {
 
       if (isEditing) {
         const { data: existing } = await supabase.from("products").select("*").eq("id", id).single();
-        if (existing) setProduct({ ...EMPTY_PRODUCT, ...existing, discount_value: existing.discount_value ?? "" });
+        if (existing)
+          setProduct({
+            ...EMPTY_PRODUCT,
+            ...existing,
+            discount_value: existing.discount_value ?? "",
+            stock_quantity: existing.stock_quantity ?? "",
+            sold_count: existing.sold_count ?? "",
+          });
 
         const { data: imgs } = await supabase
           .from("product_images")
@@ -118,6 +129,14 @@ export default function ProductEditPage() {
       setError("শতাংশ ডিসকাউন্ট ১০০%-এর বেশি হতে পারবে না।");
       return;
     }
+    if (product.stock_quantity !== "" && Number(product.stock_quantity) < 0) {
+      setError("স্টকের পরিমাণ ঋণাত্মক হতে পারবে না।");
+      return;
+    }
+    if (product.sold_count !== "" && Number(product.sold_count) < 0) {
+      setError("বিক্রিত পরিমাণ ঋণাত্মক হতে পারবে না।");
+      return;
+    }
     if (!shopId) {
       setError("প্রথমে দোকানের তথ্য পূরণ করুন।");
       return;
@@ -137,6 +156,8 @@ export default function ProductEditPage() {
         category_id: product.category_id || null,
         discount_type: product.discount_type || "none",
         discount_value: product.discount_type === "none" ? 0 : Number(product.discount_value) || 0,
+        stock_quantity: Number(product.stock_quantity) || 0,
+        sold_count: Number(product.sold_count) || 0,
       };
       delete payload.shops;
       delete payload.categories;
@@ -209,7 +230,9 @@ export default function ProductEditPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">প্রধান ছবি *</CardTitle>
-            <CardDescription>সর্বোচ্চ {PRODUCT_IMAGE_MAX_KB} KB সাইজের ছবি — প্রতিটি পণ্যে ১টি থেকে ৪টি ছবি দেওয়া যাবে</CardDescription>
+            <CardDescription>
+              সর্বোচ্চ ১ MB পর্যন্ত ছবি আপলোড করুন — স্বয়ংক্রিয়ভাবে {PRODUCT_IMAGE_COMPRESS_MIN_KB}–{PRODUCT_IMAGE_COMPRESS_MAX_KB} KB-এ কমপ্রেস হয়ে যাবে। প্রতিটি পণ্যে ১টি থেকে ৪টি ছবি দেওয়া যাবে
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ImageUploader
@@ -218,6 +241,9 @@ export default function ProductEditPage() {
               value={product.thumbnail_url}
               onUploaded={(url) => update("thumbnail_url", url)}
               maxSizeKB={PRODUCT_IMAGE_MAX_KB}
+              autoCompress
+              compressTargetMinKB={PRODUCT_IMAGE_COMPRESS_MIN_KB}
+              compressTargetMaxKB={PRODUCT_IMAGE_COMPRESS_MAX_KB}
             />
           </CardContent>
         </Card>
@@ -248,6 +274,9 @@ export default function ProductEditPage() {
                   value=""
                   onUploaded={addExtraImage}
                   maxSizeKB={PRODUCT_IMAGE_MAX_KB}
+                  autoCompress
+                  compressTargetMinKB={PRODUCT_IMAGE_COMPRESS_MIN_KB}
+                  compressTargetMaxKB={PRODUCT_IMAGE_COMPRESS_MAX_KB}
                 />
               )}
             </CardContent>
@@ -310,6 +339,39 @@ export default function ProductEditPage() {
                 value={product.description || ""}
                 onChange={(e) => update("description", e.target.value)}
                 className="flex w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">স্টক ও বিক্রয় তথ্য</CardTitle>
+            <CardDescription>স্টকের পরিমাণ ও বিক্রিত সংখ্যা ম্যানুয়ালি সেট করতে পারবেন</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="stock_quantity">স্টকে আছে (পরিমাণ)</Label>
+              <Input
+                id="stock_quantity"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="০"
+                value={product.stock_quantity}
+                onChange={(e) => update("stock_quantity", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sold_count">বিক্রিত পরিমাণ</Label>
+              <Input
+                id="sold_count"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="০"
+                value={product.sold_count}
+                onChange={(e) => update("sold_count", e.target.value)}
               />
             </div>
           </CardContent>
