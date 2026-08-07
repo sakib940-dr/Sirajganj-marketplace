@@ -24,11 +24,13 @@ import ShopSettingsPage from "@/pages/seller/ShopSettingsPage.jsx";
 import ProductListPage from "@/pages/seller/ProductListPage.jsx";
 import ProductEditPage from "@/pages/seller/ProductEditPage.jsx";
 import GalleryPage from "@/pages/seller/GalleryPage.jsx";
+import SellerVerificationPage from "@/pages/seller/SellerVerificationPage.jsx";
 
 // Admin
 import AdminDashboard from "@/pages/admin/AdminDashboard.jsx";
 import UserManagePage from "@/pages/admin/UserManagePage.jsx";
 import SellerManagePage from "@/pages/admin/SellerManagePage.jsx";
+import SellerVerificationManagePage from "@/pages/admin/SellerVerificationManagePage.jsx";
 import CategoryManagePage from "@/pages/admin/CategoryManagePage.jsx";
 import ProductManagePage from "@/pages/admin/ProductManagePage.jsx";
 import BannerManagePage from "@/pages/admin/BannerManagePage.jsx";
@@ -64,6 +66,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.DASHBOARD_PRODUCT_NEW} element={<ProductEditPage />} />
         <Route path={ROUTES.DASHBOARD_PRODUCT_EDIT} element={<ProductEditPage />} />
         <Route path={ROUTES.DASHBOARD_GALLERY} element={<GalleryPage />} />
+        <Route path={ROUTES.DASHBOARD_VERIFICATION} element={<SellerVerificationPage />} />
       </Route>
 
       {/* Admin (protected, role: super_admin) */}
@@ -77,6 +80,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.ADMIN} element={<AdminDashboard />} />
         <Route path={ROUTES.ADMIN_USERS} element={<UserManagePage />} />
         <Route path={ROUTES.ADMIN_SELLERS} element={<SellerManagePage />} />
+        <Route path={ROUTES.ADMIN_VERIFICATIONS} element={<SellerVerificationManagePage />} />
         <Route path={ROUTES.ADMIN_CATEGORIES} element={<CategoryManagePage />} />
         <Route path={ROUTES.ADMIN_PRODUCTS} element={<ProductManagePage />} />
         <Route path={ROUTES.ADMIN_BANNERS} element={<BannerManagePage />} />

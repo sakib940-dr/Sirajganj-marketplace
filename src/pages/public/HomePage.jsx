@@ -19,7 +19,7 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
-  const { categories, loading: catLoading } = useCategories();
+  const { categories, loading: catLoading } = useCategories({ rootOnly: true });
   const { shops, loading: shopLoading } = useShops({ limit: 6 });
   const { products, loading: productLoading } = useLatestProducts({ limit: 8 });
   const { banners } = useBanners();

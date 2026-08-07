@@ -1,15 +1,16 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Package } from "lucide-react";
 import { useProductsByCategory } from "@/hooks/useProducts";
 import { supabase } from "@/lib/supabaseClient";
+import { categoryPath } from "@/constants/routes";
 import ProductCard from "@/components/shared/ProductCard.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 export default function CategoryPage() {
   const { slug } = useParams();
-  const { products, loading } = useProductsByCategory(slug);
+  const { products, subCategories, loading } = useProductsByCategory(slug);
   const [categoryName, setCategoryName] = useState("");
 
   useEffect(() => {
@@ -26,6 +27,20 @@ export default function CategoryPage() {
       <h1 className="mb-6 text-2xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
         {categoryName ? `${categoryName} — সব পণ্য` : "ক্যাটাগরির পণ্যসমূহ"}
       </h1>
+
+      {subCategories.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {subCategories.map((sub) => (
+            <Link
+              key={sub.id}
+              to={categoryPath(sub.slug)}
+              className="rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              {sub.name}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <LoadingSpinner label="পণ্য লোড হচ্ছে..." />

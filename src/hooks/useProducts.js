@@ -35,6 +35,7 @@ export function useLatestProducts({ limit = 8 } = {}) {
 
 export function useProductsByCategory(categorySlug) {
   const [products, setProducts] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -52,21 +53,33 @@ export function useProductsByCategory(categorySlug) {
       if (!category) {
         if (active) {
           setProducts([]);
+          setSubCategories([]);
           setLoading(false);
         }
         return;
       }
 
+      // এই ক্যাটাগরির সাব-ক্যাটাগরি (থাকলে) খুঁজে বের করা হচ্ছে — মূল ক্যাটাগরিতে
+      // ঢুকলে এর সব সাব-ক্যাটাগরির পণ্যও একসাথে দেখানো হবে
+      const { data: children } = await supabase
+        .from("categories")
+        .select("id, name, slug")
+        .eq("parent_id", category.id)
+        .order("sort_order", { ascending: true });
+
+      const categoryIds = [category.id, ...(children ?? []).map((c) => c.id)];
+
       const { data, error } = await supabase
         .from("products")
         .select(PRODUCT_SELECT)
-        .eq("category_id", category.id)
+        .in("category_id", categoryIds)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (!active) return;
       if (error) setError(error.message);
       else setProducts(data ?? []);
+      setSubCategories(children ?? []);
       setLoading(false);
     }
     load();
@@ -75,7 +88,7 @@ export function useProductsByCategory(categorySlug) {
     };
   }, [categorySlug]);
 
-  return { products, loading, error };
+  return { products, subCategories, loading, error };
 }
 
 export function useProductBySlug(slug) {

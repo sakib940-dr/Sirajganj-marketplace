@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import { ROUTES, editProductPath } from "@/constants/routes";
-import { formatPriceBn } from "@/lib/utils";
+import { formatPriceBn, getDiscountedPrice } from "@/lib/utils";
+
+const MAX_PRODUCTS_PER_SHOP = 50;
 
 export default function ProductListPage() {
   const { user } = useAuth();
@@ -81,11 +83,19 @@ export default function ProductListPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-          পণ্যসমূহ
-        </h1>
-        <Button asChild size="sm">
-          <Link to={ROUTES.DASHBOARD_PRODUCT_NEW}>
+        <div>
+          <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
+            পণ্যসমূহ
+          </h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {products.length} / {MAX_PRODUCTS_PER_SHOP}টি পণ্য যোগ করা হয়েছে
+          </p>
+        </div>
+        <Button asChild size="sm" disabled={products.length >= MAX_PRODUCTS_PER_SHOP}>
+          <Link
+            to={ROUTES.DASHBOARD_PRODUCT_NEW}
+            onClick={(e) => products.length >= MAX_PRODUCTS_PER_SHOP && e.preventDefault()}
+          >
             <Plus className="h-4 w-4" /> নতুন পণ্য
           </Link>
         </Button>
@@ -125,7 +135,16 @@ export default function ProductListPage() {
                     </div>
                     <span className="line-clamp-1 font-medium">{p.name}</span>
                   </td>
-                  <td className="p-3">{formatPriceBn(p.price)}</td>
+                  <td className="p-3">
+                    {getDiscountedPrice(p).hasDiscount ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="font-medium">{formatPriceBn(getDiscountedPrice(p).finalPrice)}</span>
+                        <span className="text-xs text-muted-foreground line-through">{formatPriceBn(p.price)}</span>
+                      </span>
+                    ) : (
+                      formatPriceBn(p.price)
+                    )}
+                  </td>
                   <td className="p-3">
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-medium ${

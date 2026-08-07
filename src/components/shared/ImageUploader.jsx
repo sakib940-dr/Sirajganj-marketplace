@@ -4,8 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const MAX_SIZE_KB = 100;
-const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
+const DEFAULT_MAX_SIZE_KB = 100;
 
 /**
  * @param {string} bucket - Supabase storage bucket name
@@ -13,11 +12,20 @@ const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
  * @param {string} value - বর্তমান ছবির URL (থাকলে)
  * @param {(url: string) => void} onUploaded - আপলোড সফল হলে public URL ফেরত দেয়
  * @param {"square" | "wide"} aspect - প্রিভিউ শেপ
+ * @param {number} maxSizeKB - সর্বোচ্চ অনুমোদিত ফাইল সাইজ (KB), ডিফল্ট ১০০ KB
  */
-export default function ImageUploader({ bucket, folder, value, onUploaded, aspect = "square" }) {
+export default function ImageUploader({
+  bucket,
+  folder,
+  value,
+  onUploaded,
+  aspect = "square",
+  maxSizeKB = DEFAULT_MAX_SIZE_KB,
+}) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const maxSizeBytes = maxSizeKB * 1024;
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -29,9 +37,9 @@ export default function ImageUploader({ bucket, folder, value, onUploaded, aspec
       return;
     }
 
-    if (file.size > MAX_SIZE_BYTES) {
+    if (file.size > maxSizeBytes) {
       setError(
-        `ছবিটির সাইজ ${(file.size / 1024).toFixed(0)} KB — সর্বোচ্চ ${MAX_SIZE_KB} KB অনুমোদিত। অনুগ্রহ করে একটি Image Resizer/Compressor অ্যাপ বা ওয়েবসাইট (যেমন TinyPNG, Squoosh) দিয়ে ছবিটি ${MAX_SIZE_KB} KB-এর মধ্যে ছোট করে আবার আপলোড করুন।`
+        `ছবিটির সাইজ ${(file.size / 1024).toFixed(0)} KB — সর্বোচ্চ ${maxSizeKB} KB অনুমোদিত। অনুগ্রহ করে একটি Image Resizer/Compressor অ্যাপ বা ওয়েবসাইট (যেমন TinyPNG, Squoosh) দিয়ে ছবিটি ${maxSizeKB} KB-এর মধ্যে ছোট করে আবার আপলোড করুন।`
       );
       e.target.value = "";
       return;
@@ -94,7 +102,7 @@ export default function ImageUploader({ bucket, folder, value, onUploaded, aspec
         {uploading ? "আপলোড হচ্ছে..." : "ছবি আপলোড করুন"}
       </Button>
       <p className="mt-1 text-xs text-muted-foreground">
-        সর্বোচ্চ {MAX_SIZE_KB} KB সাইজের ছবি আপলোড করা যাবে। আপলোডের আগে Image Resizer/Compressor দিয়ে ছবি ছোট করে নিন।
+        সর্বোচ্চ {maxSizeKB >= 1024 ? `${(maxSizeKB / 1024).toFixed(maxSizeKB % 1024 === 0 ? 0 : 1)} MB` : `${maxSizeKB} KB`} সাইজের ছবি আপলোড করা যাবে। আপলোডের আগে Image Resizer/Compressor দিয়ে ছবি ছোট করে নিন।
       </p>
 
       {error && (

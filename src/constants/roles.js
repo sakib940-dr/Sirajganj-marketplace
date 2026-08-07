@@ -17,3 +17,15 @@ export const SELLER_STATUS_LABEL_BN = {
   [SELLER_STATUS.APPROVED]: "অনুমোদিত",
   [SELLER_STATUS.REJECTED]: "প্রত্যাখ্যাত",
 };
+
+export const VERIFICATION_STATUS = {
+  PENDING: "pending",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+};
+
+export const VERIFICATION_STATUS_LABEL_BN = {
+  [VERIFICATION_STATUS.PENDING]: "পর্যালোচনাধীন",
+  [VERIFICATION_STATUS.APPROVED]: "ভেরিফাইড",
+  [VERIFICATION_STATUS.REJECTED]: "প্রত্যাখ্যাত",
+};

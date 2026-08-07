@@ -4,11 +4,11 @@ import { Save, Check, X } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/useCategories";
-import { slugify } from "@/lib/utils";
+import { slugify, formatPriceBn, getDiscountedPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import ImageUploader from "@/components/shared/ImageUploader.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import { ROUTES } from "@/constants/routes";
@@ -21,7 +21,13 @@ const EMPTY_PRODUCT = {
   description: "",
   thumbnail_url: "",
   is_active: true,
+  discount_type: "none",
+  discount_value: "",
 };
+
+const PRODUCT_IMAGE_MAX_KB = 200;
+const MAX_PRODUCTS_PER_SHOP = 50;
+const MAX_EXTRA_IMAGES = 3; // + ১টি মূল ছবি = সর্বোচ্চ ৪টি
 
 export default function ProductEditPage() {
   const { id } = useParams();
@@ -39,14 +45,24 @@ export default function ProductEditPage() {
   const [error, setError] = useState("");
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEditing);
 
+  const [productCount, setProductCount] = useState(0);
+
   useEffect(() => {
     async function load() {
       const { data: shop } = await supabase.from("shops").select("id").eq("owner_id", user.id).maybeSingle();
       setShopId(shop?.id ?? null);
 
+      if (shop?.id && !isEditing) {
+        const { count } = await supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("shop_id", shop.id);
+        setProductCount(count ?? 0);
+      }
+
       if (isEditing) {
         const { data: existing } = await supabase.from("products").select("*").eq("id", id).single();
-        if (existing) setProduct(existing);
+        if (existing) setProduct({ ...EMPTY_PRODUCT, ...existing, discount_value: existing.discount_value ?? "" });
 
         const { data: imgs } = await supabase
           .from("product_images")
@@ -59,6 +75,16 @@ export default function ProductEditPage() {
     }
     if (user) load();
   }, [user, id, isEditing]);
+
+  // ক্যাটাগরি ও সাব-ক্যাটাগরি আলাদা করে গ্রুপ করা হচ্ছে (dropdown-এ দেখানোর জন্য)
+  const rootCategories = categories.filter((c) => !c.parent_id);
+  const childCategoriesByParent = categories.reduce((acc, c) => {
+    if (c.parent_id) {
+      acc[c.parent_id] = acc[c.parent_id] || [];
+      acc[c.parent_id].push(c);
+    }
+    return acc;
+  }, {});
 
   const update = (field, value) => setProduct((prev) => ({ ...prev, [field]: value }));
 
@@ -76,8 +102,24 @@ export default function ProductEditPage() {
       setError("পণ্যের নাম, লিংক (slug) এবং মূল্য অবশ্যই দিতে হবে।");
       return;
     }
+    if (!product.thumbnail_url) {
+      setError("কমপক্ষে ১টি পণ্যের ছবি আবশ্যক (সর্বোচ্চ ৪টি পর্যন্ত দেওয়া যাবে)।");
+      return;
+    }
+    if (product.discount_type !== "none" && (!product.discount_value || Number(product.discount_value) <= 0)) {
+      setError("ডিসকাউন্টের ধরন নির্বাচন করলে ডিসকাউন্টের পরিমাণও দিতে হবে।");
+      return;
+    }
+    if (product.discount_type === "percentage" && Number(product.discount_value) > 100) {
+      setError("শতাংশ ডিসকাউন্ট ১০০%-এর বেশি হতে পারবে না।");
+      return;
+    }
     if (!shopId) {
       setError("প্রথমে দোকানের তথ্য পূরণ করুন।");
+      return;
+    }
+    if (!isEditing && productCount >= MAX_PRODUCTS_PER_SHOP) {
+      setError(`একটি দোকান সর্বোচ্চ ${MAX_PRODUCTS_PER_SHOP}টি পণ্য যোগ করতে পারবে।`);
       return;
     }
 
@@ -89,6 +131,8 @@ export default function ProductEditPage() {
         price: Number(product.price),
         shop_id: shopId,
         category_id: product.category_id || null,
+        discount_type: product.discount_type || "none",
+        discount_value: product.discount_type === "none" ? 0 : Number(product.discount_value) || 0,
       };
       delete payload.shops;
       delete payload.categories;
@@ -104,6 +148,8 @@ export default function ProductEditPage() {
           setError(
             "অনুমতি নেই — আপনার সেলার অ্যাকাউন্ট এখনো Approved হয়নি, অথবা এই দোকান আপনার নয়।"
           );
+        } else if (saveError.message.includes("সর্বোচ্চ ৫০টি পণ্য")) {
+          setError(saveError.message);
         } else {
           setError("সংরক্ষণ ব্যর্থ হয়েছে: " + saveError.message);
         }
@@ -147,10 +193,17 @@ export default function ProductEditPage() {
         {isEditing ? "পণ্য এডিট করুন" : "নতুন পণ্য যোগ করুন"}
       </h1>
 
+      {!isEditing && productCount >= MAX_PRODUCTS_PER_SHOP && (
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          আপনার দোকানে ইতিমধ্যে {MAX_PRODUCTS_PER_SHOP}টি পণ্য যোগ করা হয়েছে — সর্বোচ্চ সীমায় পৌঁছে গেছেন। নতুন পণ্য যোগ করতে হলে আগে কিছু পণ্য মুছুন।
+        </p>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">প্রধান ছবি</CardTitle>
+            <CardTitle className="text-base">প্রধান ছবি *</CardTitle>
+            <CardDescription>সর্বোচ্চ {PRODUCT_IMAGE_MAX_KB} KB সাইজের ছবি — প্রতিটি পণ্যে ১টি থেকে ৪টি ছবি দেওয়া যাবে</CardDescription>
           </CardHeader>
           <CardContent>
             <ImageUploader
@@ -158,6 +211,7 @@ export default function ProductEditPage() {
               folder={user.id}
               value={product.thumbnail_url}
               onUploaded={(url) => update("thumbnail_url", url)}
+              maxSizeKB={PRODUCT_IMAGE_MAX_KB}
             />
           </CardContent>
         </Card>
@@ -165,7 +219,8 @@ export default function ProductEditPage() {
         {isEditing && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">আরও ছবি (ঐচ্ছিক)</CardTitle>
+              <CardTitle className="text-base">আরও ছবি (ঐচ্ছিক, সর্বোচ্চ {MAX_EXTRA_IMAGES}টি)</CardTitle>
+              <CardDescription>একাধিক ছবি দিলে ভিজিটররা পণ্যের পেজে স্বয়ংক্রিয় স্লাইডারে দেখতে পাবেন</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-4">
               {extraImages.map((img) => (
@@ -180,8 +235,14 @@ export default function ProductEditPage() {
                   </button>
                 </div>
               ))}
-              {extraImages.length < 4 && (
-                <ImageUploader bucket="product-images" folder={user.id} value="" onUploaded={addExtraImage} />
+              {extraImages.length < MAX_EXTRA_IMAGES && (
+                <ImageUploader
+                  bucket="product-images"
+                  folder={user.id}
+                  value=""
+                  onUploaded={addExtraImage}
+                  maxSizeKB={PRODUCT_IMAGE_MAX_KB}
+                />
               )}
             </CardContent>
           </Card>
@@ -222,10 +283,15 @@ export default function ProductEditPage() {
                   className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="">নির্বাচন করুন</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
+                  {rootCategories.map((c) => (
+                    <optgroup key={c.id} label={c.name}>
+                      <option value={c.id}>{c.name} (সাধারণ)</option>
+                      {(childCategoriesByParent[c.id] || []).map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          &nbsp;&nbsp;— {sub.name}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
@@ -243,10 +309,51 @@ export default function ProductEditPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">ডিসকাউন্ট (ঐচ্ছিক)</CardTitle>
+            <CardDescription>নির্দিষ্ট পরিমাণ টাকা অথবা শতাংশ হারে ছাড় দিতে পারবেন</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="discount_type">ডিসকাউন্টের ধরন</Label>
+              <select
+                id="discount_type"
+                value={product.discount_type || "none"}
+                onChange={(e) => update("discount_type", e.target.value)}
+                className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="none">কোনো ডিসকাউন্ট নেই</option>
+                <option value="fixed">নির্দিষ্ট পরিমাণ (৳)</option>
+                <option value="percentage">শতাংশ (%)</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="discount_value">
+                ডিসকাউন্টের পরিমাণ {product.discount_type === "percentage" ? "(%)" : "(৳)"}
+              </Label>
+              <Input
+                id="discount_value"
+                type="number"
+                min="0"
+                max={product.discount_type === "percentage" ? 100 : undefined}
+                disabled={product.discount_type === "none"}
+                value={product.discount_value}
+                onChange={(e) => update("discount_value", e.target.value)}
+              />
+            </div>
+            {product.discount_type !== "none" && product.price && product.discount_value && (
+              <p className="sm:col-span-2 text-xs text-muted-foreground">
+                ছাড়ের পর মূল্য: <span className="font-medium text-primary">{formatPriceBn(getDiscountedPrice({ ...product, price: Number(product.price) }).finalPrice)}</span>
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={saving} size="lg">
+          <Button type="submit" disabled={saving || (!isEditing && productCount >= MAX_PRODUCTS_PER_SHOP)} size="lg">
             {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saving ? "সংরক্ষণ হচ্ছে..." : saved ? "সংরক্ষিত হয়েছে" : "সংরক্ষণ করুন"}
           </Button>

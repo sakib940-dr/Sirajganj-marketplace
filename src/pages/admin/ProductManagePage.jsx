@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
-import { formatPriceBn } from "@/lib/utils";
+import { formatPriceBn, getDiscountedPrice } from "@/lib/utils";
 
 export default function ProductManagePage() {
   const [products, setProducts] = useState([]);
@@ -72,7 +72,16 @@ export default function ProductManagePage() {
                   <span className="line-clamp-1 font-medium">{p.name}</span>
                 </td>
                 <td className="p-3 text-muted-foreground">{p.shops?.shop_name || "—"}</td>
-                <td className="p-3">{formatPriceBn(p.price)}</td>
+                <td className="p-3">
+                  {getDiscountedPrice(p).hasDiscount ? (
+                    <span className="flex items-center gap-1.5">
+                      <span className="font-medium">{formatPriceBn(getDiscountedPrice(p).finalPrice)}</span>
+                      <span className="text-xs text-muted-foreground line-through">{formatPriceBn(p.price)}</span>
+                    </span>
+                  ) : (
+                    formatPriceBn(p.price)
+                  )}
+                </td>
                 <td className="p-3">
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${

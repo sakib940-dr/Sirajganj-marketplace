@@ -1,5 +1,5 @@
 import { Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Store, Package, Images, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Store, Package, Images, ShieldCheck, ArrowLeft } from "lucide-react";
 import Sidebar from "@/components/layout/Sidebar.jsx";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ const navItems = [
   { to: ROUTES.DASHBOARD_SHOP, label: "দোকানের তথ্য", icon: Store },
   { to: ROUTES.DASHBOARD_PRODUCTS, label: "পণ্যসমূহ", icon: Package },
   { to: ROUTES.DASHBOARD_GALLERY, label: "গ্যালারি", icon: Images },
+  { to: ROUTES.DASHBOARD_VERIFICATION, label: "ভেরিফিকেশন", icon: ShieldCheck },
 ];
 
 export default function DashboardLayout() {

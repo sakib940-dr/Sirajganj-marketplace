@@ -15,10 +15,12 @@ export const ROUTES = {
   DASHBOARD_PRODUCT_NEW: "/dashboard/products/new",
   DASHBOARD_PRODUCT_EDIT: "/dashboard/products/:id/edit",
   DASHBOARD_GALLERY: "/dashboard/gallery",
+  DASHBOARD_VERIFICATION: "/dashboard/verification",
 
   ADMIN: "/admin",
   ADMIN_USERS: "/admin/users",
   ADMIN_SELLERS: "/admin/sellers",
+  ADMIN_VERIFICATIONS: "/admin/verifications",
   ADMIN_CATEGORIES: "/admin/categories",
   ADMIN_PRODUCTS: "/admin/products",
   ADMIN_BANNERS: "/admin/banners",

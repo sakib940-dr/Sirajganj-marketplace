@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Package, Store, Images, ArrowRight } from "lucide-react";
+import { Package, Store, Images, ShieldCheck, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,7 +80,7 @@ export default function DashboardHome() {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         <Link to={ROUTES.DASHBOARD_SHOP} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/40">
           <span className="flex items-center gap-2 text-sm font-medium"><Store className="h-4 w-4 text-primary" /> দোকানের তথ্য</span>
           <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -91,6 +91,10 @@ export default function DashboardHome() {
         </Link>
         <Link to={ROUTES.DASHBOARD_GALLERY} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/40">
           <span className="flex items-center gap-2 text-sm font-medium"><Images className="h-4 w-4 text-primary" /> গ্যালারি</span>
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+        <Link to={ROUTES.DASHBOARD_VERIFICATION} className="flex items-center justify-between rounded-xl border border-border bg-card p-4 hover:border-primary/40">
+          <span className="flex items-center gap-2 text-sm font-medium"><ShieldCheck className="h-4 w-4 text-primary" /> ভেরিফিকেশন</span>
           <ArrowRight className="h-4 w-4 text-muted-foreground" />
         </Link>
       </div>

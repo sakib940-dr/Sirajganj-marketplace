@@ -1,11 +1,13 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Package, Store, MessageCircle } from "lucide-react";
 import { useProductBySlug } from "@/hooks/useProducts";
-import { formatPriceBn } from "@/lib/utils";
+import { formatPriceBn, getDiscountedPrice } from "@/lib/utils";
 import { shopPath } from "@/constants/routes";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
+
+const AUTO_SLIDE_INTERVAL_MS = 4000;
 
 export default function ProductPage() {
   const { productSlug } = useParams();
@@ -14,6 +16,21 @@ export default function ProductPage() {
     ? [product.thumbnail_url, ...images.map((i) => i.image_url)].filter(Boolean)
     : [];
   const [activeImage, setActiveImage] = useState(0);
+
+  // একাধিক ছবি থাকলে স্বয়ংক্রিয় ইমেজ স্লাইডার (কয়েক সেকেন্ড পরপর পরবর্তী ছবি দেখাবে)
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setActiveImage((prev) => (prev + 1) % allImages.length);
+    }, AUTO_SLIDE_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [allImages.length]);
+
+  useEffect(() => {
+    setActiveImage(0);
+  }, [product?.id]);
+
+  const { hasDiscount, originalPrice, finalPrice, percentOff } = getDiscountedPrice(product);
 
   if (loading) return <LoadingSpinner fullScreen label="পণ্য লোড হচ্ছে..." />;
 
@@ -64,12 +81,22 @@ export default function ProductPage() {
           <h1 className="mt-3 text-2xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
             {product.name}
           </h1>
-          <p className="mt-3 text-3xl font-bold text-primary">{formatPriceBn(product.price)}</p>
+          {hasDiscount ? (
+            <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
+              <p className="text-3xl font-bold text-primary">{formatPriceBn(finalPrice)}</p>
+              <p className="text-lg text-muted-foreground line-through">{formatPriceBn(originalPrice)}</p>
+              <span className="rounded-full bg-destructive px-2.5 py-1 text-xs font-semibold text-destructive-foreground">
+                {percentOff}% ছাড়
+              </span>
+            </div>
+          ) : (
+            <p className="mt-3 text-3xl font-bold text-primary">{formatPriceBn(product.price)}</p>
+          )}
 
           {product.shops?.whatsapp_number && (
             <a
               href={`https://wa.me/${product.shops.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
-                `আমি "${product.name}" পণ্যটি (মূল্য: ${formatPriceBn(product.price)}) কিনতে আগ্রহী। এই লিংক থেকে দেখেছি: ${window.location.href}`
+                `আমি "${product.name}" পণ্যটি (মূল্য: ${formatPriceBn(finalPrice)}) কিনতে আগ্রহী। এই লিংক থেকে দেখেছি: ${window.location.href}`
               )}`}
               target="_blank"
               rel="noreferrer"
