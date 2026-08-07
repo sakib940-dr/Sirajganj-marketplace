@@ -22,7 +22,10 @@ export default function AdminLayout() {
 
   const navItems = [
     { to: ROUTES.ADMIN, label: "ড্যাশবোর্ড", icon: LayoutDashboard, end: true },
-    { to: ROUTES.ADMIN_USERS, label: "ইউজার (রোলসহ)", icon: UserCog },
+    // "ইউজার (রোলসহ)" — সব ইউজারের তালিকা + role — শুধুমাত্র Super Admin দেখতে পাবেন
+    ...(isSuperAdmin
+      ? [{ to: ROUTES.ADMIN_USERS, label: "ইউজার (রোলসহ)", icon: UserCog }]
+      : []),
     // "User Credentials" এলাকা — শুধুমাত্র Super Admin দেখতে পাবেন
     ...(isSuperAdmin
       ? [{ to: ROUTES.ADMIN_CREDENTIALS, label: "লগইন অ্যাক্সেস", icon: KeyRound }]
@@ -31,8 +34,13 @@ export default function AdminLayout() {
     { to: ROUTES.ADMIN_VERIFICATIONS, label: "সেলার ভেরিফিকেশন", icon: ShieldCheck },
     { to: ROUTES.ADMIN_CATEGORIES, label: "ক্যাটাগরি", icon: FolderTree },
     { to: ROUTES.ADMIN_PRODUCTS, label: "পণ্য ম্যানেজমেন্ট", icon: Package },
-    { to: ROUTES.ADMIN_BANNERS, label: "ব্যানার", icon: GalleryHorizontal },
-    { to: ROUTES.ADMIN_SETTINGS, label: "সাইট সেটিংস", icon: Settings },
+    // ব্যানার ও সাইট সেটিংস — শুধুমাত্র Super Admin পরিবর্তন করতে পারবেন
+    ...(isSuperAdmin
+      ? [
+          { to: ROUTES.ADMIN_BANNERS, label: "ব্যানার", icon: GalleryHorizontal },
+          { to: ROUTES.ADMIN_SETTINGS, label: "সাইট সেটিংস", icon: Settings },
+        ]
+      : []),
   ];
 
   return (

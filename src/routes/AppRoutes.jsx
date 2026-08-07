@@ -79,7 +79,14 @@ export default function AppRoutes() {
         }
       >
         <Route path={ROUTES.ADMIN} element={<AdminDashboard />} />
-        <Route path={ROUTES.ADMIN_USERS} element={<UserManagePage />} />
+        <Route
+          path={ROUTES.ADMIN_USERS}
+          element={
+            <ProtectedRoute requiredRole={ROLES.SUPER_ADMIN}>
+              <UserManagePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path={ROUTES.ADMIN_CREDENTIALS}
           element={
@@ -92,8 +99,22 @@ export default function AppRoutes() {
         <Route path={ROUTES.ADMIN_VERIFICATIONS} element={<SellerVerificationManagePage />} />
         <Route path={ROUTES.ADMIN_CATEGORIES} element={<CategoryManagePage />} />
         <Route path={ROUTES.ADMIN_PRODUCTS} element={<ProductManagePage />} />
-        <Route path={ROUTES.ADMIN_BANNERS} element={<BannerManagePage />} />
-        <Route path={ROUTES.ADMIN_SETTINGS} element={<SiteSettingsPage />} />
+        <Route
+          path={ROUTES.ADMIN_BANNERS}
+          element={
+            <ProtectedRoute requiredRole={ROLES.SUPER_ADMIN}>
+              <BannerManagePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN_SETTINGS}
+          element={
+            <ProtectedRoute requiredRole={ROLES.SUPER_ADMIN}>
+              <SiteSettingsPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

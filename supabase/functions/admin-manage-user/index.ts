@@ -1,8 +1,13 @@
 // supabase/functions/admin-manage-user/index.ts
 //
-// এই Edge Function শুধুমাত্র verified Super Admin-কে অন্য যেকোনো ইউজারকে
-// ban / unban / delete করার অনুমতি দেয়। service_role key কখনো browser-এ
-// পাঠানো হয় না — এটা শুধু এই সার্ভার-সাইড ফাংশনের ভেতরেই ব্যবহৃত হয়।
+// এই Edge Function ইউজার ban / unban / delete করার অনুমতি দেয়:
+//   - Super Admin: যেকোনো ইউজারের উপর ban/unban/delete করতে পারবেন (শেষ
+//     Super Admin বাদে)।
+//   - Admin: শুধুমাত্র "seller" রোলের অ্যাকাউন্ট ban/unban (active/deactivate)
+//     করতে পারবেন — delete করতে পারবেন না, অন্য কোনো role-এর অ্যাকাউন্টেও
+//     হাত দিতে পারবেন না।
+// service_role key কখনো browser-এ পাঠানো হয় না — এটা শুধু এই সার্ভার-সাইড
+// ফাংশনের ভেতরেই ব্যবহৃত হয়।
 // (এটি admin-reset-password ফাংশনের মতোই একই security প্যাটার্ন অনুসরণ করে।)
 //
 // action: "ban" | "unban" | "delete"
@@ -52,15 +57,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ২. caller সত্যিই super_admin কিনা যাচাই
+    // ২. caller সত্যিই super_admin অথবা admin কিনা যাচাই
     const { data: callerProfile } = await callerClient
       .from("profiles")
       .select("role")
       .eq("id", caller.id)
       .single();
 
-    if (callerProfile?.role !== "super_admin") {
-      return new Response(JSON.stringify({ error: "শুধুমাত্র Super Admin এই কাজ করতে পারবেন।" }), {
+    const isSuperAdminCaller = callerProfile?.role === "super_admin";
+    const isAdminCaller = callerProfile?.role === "admin";
+
+    if (!isSuperAdminCaller && !isAdminCaller) {
+      return new Response(JSON.stringify({ error: "শুধুমাত্র Admin/Super Admin এই কাজ করতে পারবেন।" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -78,6 +86,32 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // Normal Admin (super_admin নন) শুধুমাত্র "seller" রোলের অ্যাকাউন্ট
+    // active/deactivate (ban/unban) করতে পারবেন — delete করতে পারবেন না,
+    // অন্য কোনো role-এর (visitor/admin/super_admin) অ্যাকাউন্টেও হাত দিতে
+    // পারবেন না। এই স্কোপ-চেকটা Super Admin-এর জন্য প্রযোজ্য নয়।
+    if (isAdminCaller) {
+      if (action === "delete") {
+        return new Response(
+          JSON.stringify({ error: "Admin কোনো ইউজার ডিলিট করতে পারবেন না — শুধুমাত্র Super Admin পারবেন।" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: targetProfileForScope } = await adminClient
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (targetProfileForScope?.role !== "seller") {
+        return new Response(
+          JSON.stringify({ error: "Admin শুধুমাত্র সেলার অ্যাকাউন্ট active/deactivate করতে পারবেন।" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // সিস্টেমে অন্তত ১ জন Super Admin সবসময় থাকতেই হবে — "delete" একটি
     // auth.users cascade delete, যা profiles টেবিলের UPDATE trigger দিয়ে
