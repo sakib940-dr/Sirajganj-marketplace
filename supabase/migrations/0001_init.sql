@@ -13,10 +13,13 @@ create extension if not exists "pgcrypto";
 -- ------------------------------------------------------------
 
 -- 2.1 profiles — auth.users এর সাথে ১:১ সম্পর্ক
+-- FIXED (merged from 0002_profiles_contact_info.sql): email কলাম শুরু থেকেই
+-- যোগ করা হলো, নাহলে Admin প্যানেলে ইউজারের ইমেইল দেখানো যেত না।
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   full_name text,
   phone text,
+  email text,
   role text not null default 'visitor' check (role in ('visitor', 'seller', 'super_admin')),
   seller_status text not null default 'none' check (seller_status in ('none', 'pending', 'approved', 'rejected')),
   created_at timestamptz not null default now()
@@ -105,6 +108,8 @@ create table if not exists public.site_settings (
 -- ------------------------------------------------------------
 -- 3. AUTO-CREATE PROFILE ON SIGNUP
 -- ------------------------------------------------------------
+-- FIXED (merged from 0002_profiles_contact_info.sql): email ও phone দুটোই
+-- signup metadata থেকে profiles টেবিলে সেভ করা হচ্ছে (আগে শুধু full_name সেভ হতো)।
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -112,8 +117,13 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name)
-  values (new.id, new.raw_user_meta_data ->> 'full_name');
+  insert into public.profiles (id, full_name, email, phone)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'full_name',
+    new.email,
+    new.raw_user_meta_data ->> 'phone'
+  );
   return new;
 end;
 $$;
@@ -127,6 +137,9 @@ create trigger on_auth_user_created
 -- 4. RPC — ভিজিটর নিরাপদে "সেলার হতে চাই" আবেদন করতে পারবে
 --    (role/seller_status সরাসরি টেবিল থেকে আপডেট করা যায় না — RLS দ্বারা সুরক্ষিত)
 -- ------------------------------------------------------------
+-- FIXED (merged from 0004_fix_role_trigger.sql): নিচের trg_prevent_self_role_change
+-- trigger যাতে এই RPC-কে ব্লক না করে, তাই একটা transaction-local bypass flag সেট
+-- করে দেওয়া হয়।
 create or replace function public.request_seller_status()
 returns void
 language plpgsql
@@ -134,6 +147,7 @@ security definer
 set search_path = public
 as $$
 begin
+  perform set_config('app.bypass_role_guard', 'true', true); -- শুধু বর্তমান transaction-এর জন্য
   update public.profiles
   set role = 'seller',
       seller_status = 'pending'
@@ -192,12 +206,18 @@ create policy "profiles_update_admin"
 
 -- role/seller_status কলাম শুধুমাত্র Super Admin বা request_seller_status() RPC
 -- (যেটি security definer হিসেবে চলে) পরিবর্তন করতে পারবে — সাধারণ self-update block
+-- FIXED (merged from 0004_fix_role_trigger.sql): app.bypass_role_guard flag চেক করে,
+-- তাহলে request_seller_status() RPC-কে block করবে না। ব্রাউজার থেকে সরাসরি
+-- profiles.update({role: 'super_admin'}) করার চেষ্টা আগের মতোই ব্লক থাকবে।
 create or replace function public.prevent_self_role_change()
 returns trigger
 language plpgsql
 as $$
 begin
-  if auth.uid() = old.id and not public.is_super_admin() then
+  if auth.uid() = old.id
+     and not public.is_super_admin()
+     and coalesce(current_setting('app.bypass_role_guard', true), 'false') <> 'true'
+  then
     if new.role is distinct from old.role or new.seller_status is distinct from old.seller_status then
       raise exception 'role এবং seller_status নিজে পরিবর্তন করা যাবে না';
     end if;

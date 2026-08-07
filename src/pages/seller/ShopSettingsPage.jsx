@@ -72,27 +72,37 @@ export default function ShopSettingsPage() {
     }
 
     setSaving(true);
-    const payload = { ...shop, owner_id: user.id, slug: slugify(shop.slug) };
+    try {
+      const payload = { ...shop, owner_id: user.id, slug: slugify(shop.slug) };
 
-    const { data, error: saveError } = shopId
-      ? await supabase.from("shops").update(payload).eq("id", shopId).select().single()
-      : await supabase.from("shops").insert(payload).select().single();
+      const { data, error: saveError } = shopId
+        ? await supabase.from("shops").update(payload).eq("id", shopId).select().single()
+        : await supabase.from("shops").insert(payload).select().single();
 
-    setSaving(false);
+      if (saveError) {
+        if (saveError.message.includes("duplicate")) {
+          setError("এই লিংক (slug) ইতিমধ্যে অন্য একটি দোকান ব্যবহার করছে। ভিন্ন কিছু দিন।");
+        } else if (saveError.message.toLowerCase().includes("row-level security")) {
+          setError(
+            "অনুমতি নেই — নতুন দোকান তৈরি করতে হলে আপনার সেলার অ্যাকাউন্ট Super Admin দ্বারা Approved হতে হবে।"
+          );
+        } else {
+          setError("সংরক্ষণ ব্যর্থ হয়েছে: " + saveError.message);
+        }
+        return;
+      }
 
-    if (saveError) {
-      setError(
-        saveError.message.includes("duplicate")
-          ? "এই লিংক (slug) ইতিমধ্যে অন্য একটি দোকান ব্যবহার করছে। ভিন্ন কিছু দিন।"
-          : "সংরক্ষণ ব্যর্থ হয়েছে: " + saveError.message
-      );
-      return;
+      setShop(data);
+      setShopId(data.id);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Shop save error:", err);
+      setError("একটি অপ্রত্যাশিত সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+    } finally {
+      setSaving(false);
     }
-
-    setShop(data);
-    setShopId(data.id);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
   };
 
   if (loading) return <LoadingSpinner label="তথ্য লোড হচ্ছে..." />;

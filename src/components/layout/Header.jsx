@@ -60,7 +60,7 @@ export default function Header() {
               <Button variant="ghost" size="sm" asChild>
                 <Link to={ROUTES.DASHBOARD}>
                   <LayoutDashboard className="h-4 w-4" />
-                  ড্যাশবোর্ড
+                  {role === ROLES.SELLER ? "সেলার ড্যাশবোর্ড" : "ড্যাশবোর্ড"}
                 </Link>
               </Button>
               <Button variant="outline" size="sm" onClick={signOut}>
@@ -107,7 +107,7 @@ export default function Header() {
                 </Link>
               )}
               <Link to={ROUTES.DASHBOARD} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
-                ড্যাশবোর্ড
+                {role === ROLES.SELLER ? "সেলার ড্যাশবোর্ড" : "ড্যাশবোর্ড"}
               </Link>
               <Button variant="outline" size="sm" onClick={signOut}>
                 লগ আউট

@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId) => {
+  const fetchProfile = useCallback(async (userId, _retry = true) => {
     if (!userId) {
       setProfile(null);
       return;
@@ -20,6 +20,14 @@ export function AuthProvider({ children }) {
       .single();
 
     if (error) {
+      // Signup-এর ঠিক পরপরই profile row তৈরির trigger সামান্য দেরি করলে
+      // (network/replication lag) একবার আবার চেষ্টা করা হয়, যাতে ভুলভাবে
+      // "visitor" role ধরে fallback না হয়ে যায়।
+      if (_retry) {
+        await new Promise((res) => setTimeout(res, 700));
+        await fetchProfile(userId, false);
+        return;
+      }
       // eslint-disable-next-line no-console
       console.error("প্রোফাইল লোড করা যায়নি:", error.message);
       setProfile(null);
@@ -42,12 +50,18 @@ export function AuthProvider({ children }) {
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
+        // CRITICAL FIX: এখানে loading=true সেট না করলে, register/login এর ঠিক
+        // পরেই কোনো Protected route রেন্ডার হয়ে গেলে, profile fetch শেষ হওয়ার
+        // আগেই পুরনো/খালি role ("visitor") ধরে ভুল জায়গায় redirect করে দিতে
+        // পারে — যার ফলে সেলার login করেও normal visitor এর মতো panel দেখে।
+        setLoading(true);
         setSession(newSession);
         if (newSession?.user) {
           await fetchProfile(newSession.user.id);
         } else {
           setProfile(null);
         }
+        setLoading(false);
       }
     );
 
@@ -87,8 +101,12 @@ export function AuthProvider({ children }) {
     return { error };
   };
 
-  const refreshProfile = async () => {
-    if (session?.user) await fetchProfile(session.user.id);
+  // userId ঐচ্ছিকভাবে সরাসরি দেওয়া যায় — এটা দরকার হয় যখন signUp/signIn এর
+  // ঠিক পরপরই profile refresh করতে হয়, কারণ তখন context-এর `session` state
+  // এখনো stale/পুরনো থাকতে পারে (onAuthStateChange listener async ভাবে চলে)।
+  const refreshProfile = async (userId) => {
+    const uid = userId ?? session?.user?.id;
+    if (uid) await fetchProfile(uid);
   };
 
   const value = {

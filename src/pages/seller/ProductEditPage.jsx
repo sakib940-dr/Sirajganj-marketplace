@@ -82,36 +82,46 @@ export default function ProductEditPage() {
     }
 
     setSaving(true);
-    const payload = {
-      ...product,
-      slug: slugify(product.slug),
-      price: Number(product.price),
-      shop_id: shopId,
-      category_id: product.category_id || null,
-    };
-    delete payload.shops;
-    delete payload.categories;
+    try {
+      const payload = {
+        ...product,
+        slug: slugify(product.slug),
+        price: Number(product.price),
+        shop_id: shopId,
+        category_id: product.category_id || null,
+      };
+      delete payload.shops;
+      delete payload.categories;
 
-    const { data, error: saveError } = isEditing
-      ? await supabase.from("products").update(payload).eq("id", id).select().single()
-      : await supabase.from("products").insert(payload).select().single();
+      const { data, error: saveError } = isEditing
+        ? await supabase.from("products").update(payload).eq("id", id).select().single()
+        : await supabase.from("products").insert(payload).select().single();
 
-    setSaving(false);
+      if (saveError) {
+        if (saveError.message.includes("duplicate")) {
+          setError("এই লিংক (slug) ইতিমধ্যে ব্যবহৃত হয়েছে। ভিন্ন কিছু দিন।");
+        } else if (saveError.message.toLowerCase().includes("row-level security")) {
+          setError(
+            "অনুমতি নেই — আপনার সেলার অ্যাকাউন্ট এখনো Approved হয়নি, অথবা এই দোকান আপনার নয়।"
+          );
+        } else {
+          setError("সংরক্ষণ ব্যর্থ হয়েছে: " + saveError.message);
+        }
+        return;
+      }
 
-    if (saveError) {
-      setError(
-        saveError.message.includes("duplicate")
-          ? "এই লিংক (slug) ইতিমধ্যে ব্যবহৃত হয়েছে। ভিন্ন কিছু দিন।"
-          : "সংরক্ষণ ব্যর্থ হয়েছে: " + saveError.message
-      );
-      return;
+      setSaved(true);
+      if (!isEditing) {
+        navigate(`/dashboard/products/${data.id}/edit`, { replace: true });
+      }
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Product save error:", err);
+      setError("একটি অপ্রত্যাশিত সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+    } finally {
+      setSaving(false);
     }
-
-    setSaved(true);
-    if (!isEditing) {
-      navigate(`/dashboard/products/${data.id}/edit`, { replace: true });
-    }
-    setTimeout(() => setSaved(false), 3000);
   };
 
   const addExtraImage = async (url) => {

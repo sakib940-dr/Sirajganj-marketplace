@@ -38,14 +38,28 @@ VITE_SUPABASE_ANON_KEY=your-anon-public-key
 
 ### ধাপ ৪ — Database Migration রান করুন
 
+**নতুন (fresh) Supabase প্রজেক্টের জন্য শুধু এই একটা ফাইলই যথেষ্ট:**
+
 Supabase Dashboard → **SQL Editor** এ গিয়ে `supabase/migrations/0001_init.sql` ফাইলের সম্পূর্ণ কন্টেন্ট কপি-পেস্ট করে Run করুন।
 
+> ⚠️ **গুরুত্বপূর্ণ:** `0001_init.sql`-এ আগে একটা bug ছিল যার কারণে "সেলার হতে চাই" আবেদন
+> (register করার সময়) silently ব্যর্থ হতো এবং role কখনো `seller` হতো না — ফলে
+> সেলার login করেও Dashboard-এ normal visitor-এর মতো panel দেখাতো। **এই bug এখন
+> সরাসরি `0001_init.sql`-এর মধ্যেই ফিক্স করা আছে**, তাই এই আপডেটেড ফাইলটা রান করলে
+> এই সমস্যা আর হবে না। (`0004_fix_role_trigger.sql` ফাইলটা শুধু পুরনো/আগে-থেকে-বানানো
+> প্রজেক্টের জন্য দরকার — নতুন প্রজেক্টে এটা রান করার দরকার নেই, তবে রান করলে ক্ষতিও নেই।)
+
 এতে তৈরি হবে:
-- ৮টি টেবিল (`profiles`, `shops`, `categories`, `products`, `product_images`, `shop_gallery`, `banners`, `site_settings`)
+- ৮টি টেবিল (`profiles` — email/phone সহ, `shops`, `categories`, `products`, `product_images`, `shop_gallery`, `banners`, `site_settings`)
 - Row Level Security (RLS) পলিসি সব টেবিলে
-- Signup হলে স্বয়ংক্রিয়ভাবে `profiles` তৈরি হওয়ার Trigger
-- `request_seller_status()` RPC — ভিজিটর নিরাপদে সেলার হওয়ার আবেদন করতে পারবে
+- Signup হলে স্বয়ংক্রিয়ভাবে `profiles` তৈরি হওয়ার Trigger (email, phone, full_name সহ)
+- `request_seller_status()` RPC — ভিজিটর নিরাপদে সেলার হওয়ার আবেদন করতে পারবে (bug-fixed)
 - ৫টি Storage Bucket (`shop-logos`, `shop-banners`, `shop-gallery`, `product-images`, `site-assets`)
+
+**পুরনো প্রজেক্ট আপগ্রেড করছেন?** যদি আপনার Supabase প্রজেক্টে আগে থেকেই পুরনো
+`0001_init.sql` রান করা থাকে, তাহলে `0002_profiles_contact_info.sql` এবং
+`0004_fix_role_trigger.sql` ফাইল দুটোও (SQL Editor এ) আলাদা করে রান করুন — এই bug
+fix গুলো আপনার বিদ্যমান ডাটাবেসেও প্রয়োগ করার জন্য।
 
 ### ধাপ ৫ — নিজেকে প্রথম Super Admin বানান
 

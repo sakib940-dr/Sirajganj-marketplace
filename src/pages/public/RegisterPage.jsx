@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const [wantsSeller, setWantsSeller] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -34,12 +34,36 @@ export default function RegisterPage() {
 
     // যদি ভিজিটর সেলার হতে চায়, নিরাপদ RPC কল করে request পাঠানো হয়
     // (role/seller_status সরাসরি টেবিল থেকে আপডেট করা যায় না — RLS দ্বারা সুরক্ষিত)
+    let rpcFailed = false;
     if (wantsSeller && data?.user) {
-      await supabase.rpc("request_seller_status");
+      const { error: rpcError } = await supabase.rpc("request_seller_status");
+      if (rpcError) {
+        // CRITICAL FIX: আগে এই error চেক করা হতো না — RPC silently ব্যর্থ
+        // হলেও ইউজার কিছু বুঝতে পারতো না এবং role কখনো 'seller' হতো না,
+        // ফলে Dashboard এ ঢুকতে গেলে normal visitor হিসেবে Home এ redirect
+        // হয়ে যেত।
+        // eslint-disable-next-line no-console
+        console.error("সেলার আবেদন ব্যর্থ হয়েছে:", rpcError.message);
+        rpcFailed = true;
+        setError(
+          "অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু সেলার আবেদন পাঠাতে সমস্যা হয়েছে। কিছুক্ষণ পর লগইন করে আবার চেষ্টা করুন অথবা সাপোর্টে যোগাযোগ করুন।"
+        );
+      }
     }
 
+    // CRITICAL FIX: RPC কল করার পর ডাটাবেসে role/seller_status বদলে গেলেও
+    // AuthContext-এর local state (useAuth থেকে পাওয়া role) সাথে সাথে আপডেট
+    // হয় না — কারণ onAuthStateChange listener আলাদা async flow-এ চলে।
+    // navigate করার আগে explicit ভাবে profile refresh করে নেওয়া হচ্ছে,
+    // যাতে ProtectedRoute সঠিক (নতুন) role দেখে সঠিক জায়গায় নিয়ে যায়।
+    await refreshProfile(data?.user?.id);
+
     setSubmitting(false);
-    navigate(ROUTES.DASHBOARD);
+
+    // RPC ব্যর্থ হলে এই পেজেই থাকুক, যাতে error message দেখতে পায়
+    if (!rpcFailed) {
+      navigate(ROUTES.DASHBOARD);
+    }
   };
 
   return (
