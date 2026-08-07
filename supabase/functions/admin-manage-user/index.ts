@@ -79,6 +79,38 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // সিস্টেমে অন্তত ১ জন Super Admin সবসময় থাকতেই হবে — "delete" একটি
+    // auth.users cascade delete, যা profiles টেবিলের UPDATE trigger দিয়ে
+    // ধরা পড়ে না, তাই এখানেই সরাসরি চেক করা হচ্ছে (ban-এর জন্য এই একই
+    // ইনভ্যারিয়েন্ট DB trigger দিয়েও সুরক্ষিত, কিন্তু এখানে আগেভাগে চেক
+    // করলে caller একটা পরিষ্কার বার্তা পান, raw SQL error না)।
+    if (action === "ban" || action === "delete") {
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+
+      if (targetProfile?.role === "super_admin") {
+        const { count } = await adminClient
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("role", "super_admin");
+
+        if ((count ?? 0) <= 1) {
+          return new Response(
+            JSON.stringify({
+              error:
+                "সিস্টেমে অন্তত একজন Super Admin থাকতেই হবে — শেষ Super Admin-কে " +
+                (action === "ban" ? "ব্যান" : "ডিলিট") +
+                " করা যাবে না।",
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
+
     if (action === "delete") {
       const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
       if (deleteError) {
