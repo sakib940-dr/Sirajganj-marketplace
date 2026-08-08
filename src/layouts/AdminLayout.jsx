@@ -9,7 +9,7 @@ import {
   FolderTree,
   Package,
   GalleryHorizontal,
-  Settings,
+  Palette,
   ArrowLeft,
   Menu,
   X,
@@ -59,8 +59,8 @@ export default function AdminLayout() {
             {
               title: "সাইট কনফিগারেশন",
               items: [
-                { to: ROUTES.ADMIN_BANNERS, label: "ব্যানার", icon: GalleryHorizontal },
-                { to: ROUTES.ADMIN_SETTINGS, label: "সাইট সেটিংস", icon: Settings },
+                { to: ROUTES.ADMIN_CMS, label: "CMS প্যানেল", icon: Palette },
+                { to: ROUTES.ADMIN_BANNERS, label: "ব্যানার (দ্রুত অ্যাক্সেস)", icon: GalleryHorizontal },
               ],
             },
           ]

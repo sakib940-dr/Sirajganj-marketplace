@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout.jsx";
 import DashboardLayout from "@/layouts/DashboardLayout.jsx";
 import AdminLayout from "@/layouts/AdminLayout.jsx";
@@ -37,7 +37,7 @@ import SellerVerificationManagePage from "@/pages/admin/SellerVerificationManage
 import CategoryManagePage from "@/pages/admin/CategoryManagePage.jsx";
 import ProductManagePage from "@/pages/admin/ProductManagePage.jsx";
 import BannerManagePage from "@/pages/admin/BannerManagePage.jsx";
-import SiteSettingsPage from "@/pages/admin/SiteSettingsPage.jsx";
+import CMSPage from "@/pages/admin/cms/CMSPage.jsx";
 
 export default function AppRoutes() {
   return (
@@ -119,13 +119,15 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path={ROUTES.ADMIN_SETTINGS}
+          path={ROUTES.ADMIN_CMS}
           element={
             <ProtectedRoute requiredRole={ROLES.SUPER_ADMIN}>
-              <SiteSettingsPage />
+              <CMSPage />
             </ProtectedRoute>
           }
         />
+        {/* পুরনো /admin/settings লিংক (বুকমার্ক/ইতিহাস) নতুন CMS প্যানেলে পাঠিয়ে দেওয়া হয় */}
+        <Route path={ROUTES.ADMIN_SETTINGS} element={<Navigate to={ROUTES.ADMIN_CMS} replace />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

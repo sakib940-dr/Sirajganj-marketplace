@@ -28,6 +28,7 @@ export const ROUTES = {
   ADMIN_PRODUCTS: "/admin/products",
   ADMIN_BANNERS: "/admin/banners",
   ADMIN_SETTINGS: "/admin/settings",
+  ADMIN_CMS: "/admin/cms",
 };
 
 export const categoryPath = (slug) => `/category/${slug}`;

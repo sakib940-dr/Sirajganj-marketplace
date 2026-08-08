@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, X, GalleryHorizontal, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Pencil, X, GalleryHorizontal, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,16 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 const EMPTY = { title: "", image_url: "", link_url: "", sort_order: 0, is_active: true };
 
+/**
+ * হোমপেজ ব্যানার/স্লাইডার ম্যানেজমেন্ট — Add, Edit, Delete সবই সাপোর্ট করে।
+ * এই কম্পোনেন্টটি standalone route (/admin/banners) এবং Super Admin CMS
+ * প্যানেলের "ব্যানার/স্লাইডার" ট্যাব — দুই জায়গাতেই ব্যবহৃত হয়।
+ */
 export default function BannerManagePage() {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +35,33 @@ export default function BannerManagePage() {
     load();
   }, []);
 
+  const openAddForm = () => {
+    setEditingId(null);
+    setForm(EMPTY);
+    setError("");
+    setShowForm(true);
+  };
+
+  const openEditForm = (banner) => {
+    setEditingId(banner.id);
+    setForm({
+      title: banner.title || "",
+      image_url: banner.image_url,
+      link_url: banner.link_url || "",
+      sort_order: banner.sort_order,
+      is_active: banner.is_active,
+    });
+    setError("");
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(EMPTY);
+    setError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -37,17 +70,24 @@ export default function BannerManagePage() {
       return;
     }
     setSaving(true);
-    const { error: saveError } = await supabase.from("banners").insert({
-      ...form,
+    const payload = {
+      title: form.title.trim() || null,
+      image_url: form.image_url,
+      link_url: form.link_url.trim() || null,
       sort_order: Number(form.sort_order) || 0,
-    });
+      is_active: !!form.is_active,
+    };
+
+    const { error: saveError } = editingId
+      ? await supabase.from("banners").update(payload).eq("id", editingId)
+      : await supabase.from("banners").insert(payload);
+
     setSaving(false);
     if (saveError) {
       setError("সংরক্ষণ ব্যর্থ হয়েছে: " + saveError.message);
       return;
     }
-    setForm(EMPTY);
-    setShowForm(false);
+    closeForm();
     load();
   };
 
@@ -66,11 +106,14 @@ export default function BannerManagePage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-          হোমপেজ ব্যানার
-        </h1>
-        <Button size="sm" onClick={() => setShowForm((v) => !v)}>
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-5">
+        <div>
+          <h2 className="text-base font-semibold">হোমপেজ ব্যানার / স্লাইডার</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            হোমপেজের উপরে প্রদর্শিত স্লাইডিং ব্যানার ছবিগুলো এখান থেকে নিয়ন্ত্রণ করুন।
+          </p>
+        </div>
+        <Button size="sm" onClick={showForm ? closeForm : openAddForm}>
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
           {showForm ? "বাতিল" : "নতুন ব্যানার"}
         </Button>
@@ -98,9 +141,32 @@ export default function BannerManagePage() {
               <Input id="banner_link" value={form.link_url} onChange={(e) => setForm((f) => ({ ...f, link_url: e.target.value }))} />
             </div>
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="space-y-1.5 max-w-[160px]">
+            <Label htmlFor="banner_order">সিরিয়াল নম্বর</Label>
+            <Input
+              id="banner_order"
+              type="number"
+              value={form.sort_order}
+              onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))}
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
+              className="h-4 w-4 rounded border-input"
+            />
+            সক্রিয় (ওয়েবসাইটে প্রদর্শিত হবে)
+          </label>
+          {error && (
+            <p className="flex items-start gap-1.5 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              {error}
+            </p>
+          )}
           <Button type="submit" disabled={saving}>
-            {saving ? "সংরক্ষণ হচ্ছে..." : "সংরক্ষণ করুন"}
+            {saving ? "সংরক্ষণ হচ্ছে..." : editingId ? "আপডেট করুন" : "সংরক্ষণ করুন"}
           </Button>
         </form>
       )}
@@ -115,10 +181,13 @@ export default function BannerManagePage() {
               <div className="flex items-center justify-between p-3">
                 <span className="truncate text-sm font-medium">{b.title || "শিরোনামহীন"}</span>
                 <div className="flex gap-1.5">
-                  <Button variant="ghost" size="icon" onClick={() => toggleActive(b)}>
+                  <Button variant="ghost" size="icon" onClick={() => toggleActive(b)} title={b.is_active ? "নিষ্ক্রিয় করুন" : "সক্রিয় করুন"}>
                     {b.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)}>
+                  <Button variant="ghost" size="icon" onClick={() => openEditForm(b)} title="এডিট করুন">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)} title="মুছুন">
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
