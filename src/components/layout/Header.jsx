@@ -5,12 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useMobileMenu } from "@/context/MobileMenuContext.jsx";
 import { ROUTES } from "@/constants/routes";
 import { ROLES, isAdminOrAbove } from "@/constants/roles";
 
 export default function Header() {
   const [query, setQuery] = useState("");
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // মোবাইল মেনুর open/close state এখন MobileMenuContext থেকে আসছে, যাতে
+  // Bottom Navigation-এর "☰ মেনু" ট্যাব থেকেও এই একই প্যানেল খোলা যায় —
+  // আলাদা ডুপ্লিকেট মেনু-লজিক বানানো হয়নি।
+  const { isOpen: mobileOpen, close: closeMobileMenu, toggle: toggleMobileMenu } = useMobileMenu();
   const { isLoggedIn, role, signOut } = useAuth();
   const { settings } = useSiteSettings();
   const navigate = useNavigate();
@@ -19,7 +23,7 @@ export default function Header() {
     e.preventDefault();
     if (query.trim()) {
       navigate(`${ROUTES.SEARCH}?q=${encodeURIComponent(query.trim())}`);
-      setMobileOpen(false);
+      closeMobileMenu();
     }
   };
 
@@ -116,7 +120,7 @@ export default function Header() {
 
         <button
           className="ml-auto flex h-10 w-10 items-center justify-center rounded-lg text-foreground md:hidden"
-          onClick={() => setMobileOpen((v) => !v)}
+          onClick={() => toggleMobileMenu()}
           aria-label="মেনু খুলুন"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -136,18 +140,18 @@ export default function Header() {
           </form>
           {isLoggedIn ? (
             <>
-              <Link to={ROUTES.SAVED} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
+              <Link to={ROUTES.SAVED} className="text-sm font-medium" onClick={() => closeMobileMenu()}>
                 সংরক্ষিত
               </Link>
               {isAdminOrAbove(role) && (
-                <Link to={ROUTES.ADMIN} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
+                <Link to={ROUTES.ADMIN} className="text-sm font-medium" onClick={() => closeMobileMenu()}>
                   অ্যাডমিন প্যানেল
                 </Link>
               )}
-              <Link to={ROUTES.DASHBOARD} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
+              <Link to={ROUTES.DASHBOARD} className="text-sm font-medium" onClick={() => closeMobileMenu()}>
                 {role === ROLES.SELLER ? "সেলার ড্যাশবোর্ড" : "ড্যাশবোর্ড"}
               </Link>
-              <Link to={ROUTES.ACCOUNT} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
+              <Link to={ROUTES.ACCOUNT} className="text-sm font-medium" onClick={() => closeMobileMenu()}>
                 পাসওয়ার্ড পরিবর্তন
               </Link>
               <Button variant="outline" size="sm" onClick={signOut}>
@@ -161,7 +165,7 @@ export default function Header() {
                 size="sm"
                 asChild
                 className="w-full justify-center border-primary/25 text-primary shadow-sm hover:border-primary/50 hover:bg-primary/5"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => closeMobileMenu()}
               >
                 <Link to={ROUTES.LOGIN}>
                   <LogIn className="h-4 w-4" />
@@ -172,7 +176,7 @@ export default function Header() {
                 size="sm"
                 asChild
                 className="w-full justify-center bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-md shadow-accent/30"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => closeMobileMenu()}
               >
                 <Link to={ROUTES.REGISTER}>
                   <Sparkles className="h-4 w-4" />

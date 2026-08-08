@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Search, ArrowLeft, Tag, Store, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,16 @@ import { ROUTES } from "@/constants/routes";
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Bottom Navigation-এর "🛍️ দোকান" ট্যাব থেকে এলে (#shops হ্যাশ) সরাসরি
+  // "জনপ্রিয় দোকানসমূহ" সেকশনে স্মুথ-স্ক্রল করে নিয়ে যাওয়া হয় — এর জন্য
+  // আলাদা কোনো নতুন পেজ/রুট বানানো হয়নি, বিদ্যমান হোমপেজ সেকশনই ব্যবহার হচ্ছে।
+  useEffect(() => {
+    if (location.hash === "#shops") {
+      document.getElementById("shops")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [location.hash]);
 
   const { categories, loading: catLoading } = useCategories({ rootOnly: true });
   const { shops, loading: shopLoading } = useShops({ limit: 6 });
@@ -130,7 +140,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Shops */}
-      <section className="bg-secondary/40 py-12 md:py-16">
+      <section id="shops" className="bg-secondary/40 py-12 md:py-16">
         <div className="container">
           <div className="mb-6 flex items-center justify-between">
             <div>
