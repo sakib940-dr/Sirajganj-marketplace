@@ -72,14 +72,14 @@ export default function CredentialsPage() {
         <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
           লগইন অ্যাক্সেস
         </h1>
-        <p className="text-sm text-muted-foreground">শুধুমাত্র Super Admin এই পেজ দেখতে পারবেন</p>
+        <p className="text-sm text-muted-foreground">শুধুমাত্র নির্দিষ্ট Admin এই পেজ দেখতে পারবেন</p>
       </div>
 
       <div className="flex items-start gap-3 rounded-xl border border-accent/30 bg-accent/10 p-4 text-sm">
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
         <p>
           নিরাপত্তার জন্য কোনো ইউজারের পাসওয়ার্ড এখানে প্লেইন টেক্সটে সংরক্ষণ বা প্রদর্শন করা হয় না — এটি
-          Supabase Auth নিজেই hash করে রাখে, কেউ (Super Admin সহ) তা দেখতে পারে না। এর বদলে আপনি যেকোনো
+          Supabase Auth নিজেই hash করে রাখে, কেউ (Admin সহ) তা দেখতে পারে না। এর বদলে আপনি যেকোনো
           ইউজারের জন্য একটি নতুন পাসওয়ার্ড <strong>তৈরি করে সেট</strong> করতে পারবেন, যা একবার এখানে দেখানো
           হবে — সেটি কপি করে ইউজারকে নিরাপদ চ্যানেলে (ফোনে বলে বা ব্যক্তিগত মেসেজে) জানিয়ে দিন।
         </p>

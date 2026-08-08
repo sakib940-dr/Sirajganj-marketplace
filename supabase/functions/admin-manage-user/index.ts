@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
     const isAdminCaller = callerProfile?.role === "admin";
 
     if (!isSuperAdminCaller && !isAdminCaller) {
-      return new Response(JSON.stringify({ error: "শুধুমাত্র Admin/Super Admin এই কাজ করতে পারবেন।" }), {
+      return new Response(JSON.stringify({ error: "শুধুমাত্র Admin Panel-এর অনুমোদিত ব্যবহারকারী এই কাজ করতে পারবেন।" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     if (isAdminCaller) {
       if (action === "delete") {
         return new Response(
-          JSON.stringify({ error: "Admin কোনো ইউজার ডিলিট করতে পারবেন না — শুধুমাত্র Super Admin পারবেন।" }),
+          JSON.stringify({ error: "এই Admin অ্যাকাউন্ট দিয়ে ইউজার ডিলিট করা যাবে না — শুধুমাত্র নির্দিষ্ট Admin পারবেন।" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
           return new Response(
             JSON.stringify({
               error:
-                "সিস্টেমে অন্তত একজন Super Admin থাকতেই হবে — শেষ Super Admin-কে " +
+                "সিস্টেমে অন্তত একজন সর্বোচ্চ-পর্যায়ের Admin থাকতেই হবে — শেষজনকে " +
                 (action === "ban" ? "ব্যান" : "ডিলিট") +
                 " করা যাবে না।",
             }),

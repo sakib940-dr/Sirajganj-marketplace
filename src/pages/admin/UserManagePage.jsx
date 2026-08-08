@@ -65,10 +65,16 @@ export default function UserManagePage() {
     setDetail(null);
     setDetailLoading(true);
 
-    const [{ data: verification }, { data: shop }] = await Promise.all([
-      supabase.from("seller_verifications").select("*").eq("user_id", profile.id).maybeSingle(),
+    const [{ data: verifications }, { data: shop }] = await Promise.all([
+      supabase
+        .from("seller_verifications")
+        .select("*")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
       supabase.from("shops").select("*").eq("owner_id", profile.id).maybeSingle(),
     ]);
+    const verification = verifications?.[0] ?? null;
 
     setDetail({ verification: verification ?? null, shop: shop ?? null });
     setDetailLoading(false);
@@ -185,7 +191,7 @@ export default function UserManagePage() {
         </h1>
         <p className="text-sm text-muted-foreground">
           একজন ইউজারে ক্লিক করলে বিস্তারিত তথ্য দেখা যাবে
-          {!isSuperAdmin && " — role পরিবর্তন, ব্যান/আনব্যান বা ডিলিট শুধুমাত্র Super Admin করতে পারবেন"}
+          {!isSuperAdmin && " — role পরিবর্তন, ব্যান/আনব্যান বা ডিলিট শুধুমাত্র নির্দিষ্ট Admin করতে পারবেন"}
         </p>
       </div>
 
@@ -359,7 +365,7 @@ export default function UserManagePage() {
                   </div>
                 ) : (
                   <p className="border-t border-border pt-3 text-xs text-muted-foreground">
-                    Role পরিবর্তন, ব্যান/আনব্যান বা ডিলিট করার অনুমতি শুধুমাত্র Super Admin-এর আছে।
+                    Role পরিবর্তন, ব্যান/আনব্যান বা ডিলিট করার অনুমতি শুধুমাত্র নির্দিষ্ট Admin-এর আছে।
                   </p>
                 )}
               </div>

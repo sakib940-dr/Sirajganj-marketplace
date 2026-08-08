@@ -73,10 +73,16 @@ export default function SellerManagePage() {
     setDetail(null);
     setDetailLoading(true);
 
-    const [{ data: verification }, { data: shop }] = await Promise.all([
-      supabase.from("seller_verifications").select("*").eq("user_id", profile.id).maybeSingle(),
+    const [{ data: verifications }, { data: shop }] = await Promise.all([
+      supabase
+        .from("seller_verifications")
+        .select("*")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
       supabase.from("shops").select("*").eq("owner_id", profile.id).maybeSingle(),
     ]);
+    const verification = verifications?.[0] ?? null;
 
     setDetail({ verification: verification ?? null, shop: shop ?? null });
     setDetailLoading(false);
@@ -297,7 +303,7 @@ export default function SellerManagePage() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    নিরাপত্তার জন্য সেলার অ্যাকাউন্ট ডিলিট করার অনুমতি শুধুমাত্র Super Admin-এর আছে।
+                    নিরাপত্তার জন্য সেলার অ্যাকাউন্ট ডিলিট করার অনুমতি শুধুমাত্র নির্দিষ্ট Admin-এর আছে।
                   </p>
                 </div>
               </div>

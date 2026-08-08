@@ -94,7 +94,7 @@ export default function AdminLayout() {
                 অ্যাডমিন প্যানেল
               </p>
               <p className="truncate text-[11px] text-primary-foreground/55">
-                {isSuperAdmin ? "সুপার অ্যাডমিন অ্যাক্সেস" : "অ্যাডমিন অ্যাক্সেস"}
+                অ্যাডমিন অ্যাক্সেস
               </p>
             </div>
           </div>

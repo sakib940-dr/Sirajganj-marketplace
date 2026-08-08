@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (callerProfile?.role !== "super_admin") {
-      return new Response(JSON.stringify({ error: "শুধুমাত্র Super Admin এই কাজ করতে পারবেন।" }), {
+      return new Response(JSON.stringify({ error: "শুধুমাত্র নির্দিষ্ট Admin এই কাজ করতে পারবেন।" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

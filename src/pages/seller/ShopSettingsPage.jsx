@@ -86,7 +86,7 @@ export default function ShopSettingsPage() {
           setError("এই লিংক (slug) ইতিমধ্যে অন্য একটি দোকান ব্যবহার করছে। ভিন্ন কিছু দিন।");
         } else if (saveError.message.toLowerCase().includes("row-level security")) {
           setError(
-            "অনুমতি নেই — নতুন দোকান তৈরি করতে হলে আপনার সেলার অ্যাকাউন্ট Super Admin দ্বারা Approved হতে হবে।"
+            "অনুমতি নেই — নতুন দোকান তৈরি করতে হলে আপনার সেলার অ্যাকাউন্ট Admin Panel দ্বারা Approved হতে হবে।"
           );
         } else {
           setError("সংরক্ষণ ব্যর্থ হয়েছে: " + saveError.message);

@@ -126,7 +126,7 @@ export default function AdminDashboard() {
     <div className="space-y-7">
       <div>
         <h1 className="text-xl font-bold sm:text-2xl" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-          {isSuperAdmin ? "সুপার অ্যাডমিন ড্যাশবোর্ড" : "অ্যাডমিন ড্যাশবোর্ড"}
+          অ্যাডমিন ড্যাশবোর্ড
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">মার্কেটপ্লেসের সার্বিক পরিসংখ্যান এক নজরে</p>
       </div>

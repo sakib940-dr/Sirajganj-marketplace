@@ -5,11 +5,13 @@ export const ROLES = {
   SUPER_ADMIN: "super_admin",
 };
 
+// UI-তে সবসময় "অ্যাডমিন" দেখানো হয় — SUPER_ADMIN role internally বহাল থাকলেও
+// এর higher-level permission-এর কথা UI-তে আলাদাভাবে উল্লেখ করা হয় না।
 export const ROLE_LABEL_BN = {
   [ROLES.VISITOR]: "ভিজিটর",
   [ROLES.SELLER]: "সেলার",
   [ROLES.ADMIN]: "অ্যাডমিন",
-  [ROLES.SUPER_ADMIN]: "সুপার অ্যাডমিন",
+  [ROLES.SUPER_ADMIN]: "অ্যাডমিন",
 };
 
 export const ACCOUNT_STATUS = {
