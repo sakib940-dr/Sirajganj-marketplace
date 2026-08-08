@@ -10,9 +10,17 @@ export default function Footer() {
       <div className="container grid gap-8 py-12 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-              <Store className="h-5 w-5" />
-            </span>
+            {settings.site_logo_url ? (
+              <img
+                src={settings.site_logo_url}
+                alt={settings.site_name}
+                className="h-9 w-9 rounded-lg object-cover"
+              />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                <Store className="h-5 w-5" />
+              </span>
+            )}
             <span className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
               {settings.site_name}
             </span>

@@ -28,9 +28,17 @@ export default function Header() {
       <div className="kantha-divider" />
       <div className="container flex h-16 items-center gap-4">
         <Link to={ROUTES.HOME} className="flex items-center gap-2 shrink-0">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Store className="h-5 w-5" />
-          </span>
+          {settings.site_logo_url ? (
+            <img
+              src={settings.site_logo_url}
+              alt={settings.site_name}
+              className="h-9 w-9 rounded-lg object-cover"
+            />
+          ) : (
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Store className="h-5 w-5" />
+            </span>
+          )}
           <span className="text-xl font-bold text-primary" style={{ fontFamily: "'Tiro Bangla', serif" }}>
             {settings.site_name}
           </span>
