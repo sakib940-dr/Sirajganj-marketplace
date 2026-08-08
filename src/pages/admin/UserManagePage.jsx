@@ -316,6 +316,7 @@ export default function UserManagePage() {
                       <div className="flex items-center gap-2">
                         <label className="text-xs text-muted-foreground">সর্বোচ্চ পণ্যের সীমা:</label>
                         <input
+                          key={detail.shop.id}
                           type="number"
                           min={1}
                           disabled={busy}

@@ -45,40 +45,47 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-primary text-primary-foreground">
+      {/* Hero — কম্প্যাক্ট, রঙিন, আধুনিক ই-কমার্স-স্টাইল ব্যানার। আগে এটি মোবাইল
+          স্ক্রিনের প্রায় অর্ধেক জায়গা নিতো (py-16), যা প্রথম ইম্প্রেশনের জন্য
+          ভালো ছিল না — তাই ভার্টিক্যাল প্যাডিং/স্পেসিং অনেকটা কমানো হয়েছে ও
+          গ্র্যাডিয়েন্ট ব্যাকগ্রাউন্ড দিয়ে আরও প্রাণবন্ত লুক দেওয়া হয়েছে। */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-emerald-800 text-primary-foreground">
         <div
-          className="absolute inset-0 opacity-[0.06]"
+          className="absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
               "repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 14px)",
           }}
         />
-        <div className="container relative py-16 text-center md:py-24">
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-accent/15 px-4 py-1.5 text-xs font-semibold text-accent">
+        <div
+          className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-accent/20 blur-3xl md:h-64 md:w-64"
+          aria-hidden="true"
+        />
+        <div className="container relative py-6 text-center md:py-12">
+          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-[11px] font-semibold text-accent md:mb-3 md:text-xs">
             আপনার এলাকার নির্ভরযোগ্য দোকান খুঁজুন
           </p>
           <h1
-            className="mx-auto max-w-2xl text-3xl font-bold leading-tight md:text-5xl"
+            className="mx-auto max-w-2xl text-xl font-bold leading-tight md:text-4xl"
             style={{ fontFamily: "'Tiro Bangla', serif" }}
           >
             স্থানীয় দোকান আর পণ্য —<br className="hidden sm:block" /> এখন সব এক জায়গায়
           </h1>
-          <p className="mx-auto mt-4 max-w-lg text-primary-foreground/75">
+          <p className="mx-auto mt-2 hidden max-w-lg text-sm text-primary-foreground/75 sm:block md:mt-3 md:text-base">
             আপনার পাড়ার প্রিয় দোকানগুলোকে অনলাইনে খুঁজে নিন, পণ্য দেখুন, আর সরাসরি যোগাযোগ করুন।
           </p>
 
-          <form onSubmit={handleSearch} className="mx-auto mt-8 flex max-w-lg gap-2">
+          <form onSubmit={handleSearch} className="mx-auto mt-4 flex max-w-lg gap-2 md:mt-6">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="যেমন: শাড়ি, মোবাইল, খাবার..."
-                className="h-12 rounded-lg pl-10 text-foreground"
+                className="h-10 rounded-lg pl-10 text-sm text-foreground md:h-12 md:text-base"
               />
             </div>
-            <Button type="submit" size="lg" variant="accent">
+            <Button type="submit" size="lg" variant="accent" className="shrink-0">
               খুঁজুন
             </Button>
           </form>

@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { Package, Store, Heart } from "lucide-react";
+import { Package, Store, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { useProductBySlug, useRelatedProducts } from "@/hooks/useProducts";
 import { formatPriceBn, getDiscountedPrice } from "@/lib/utils";
 import { shopPath } from "@/constants/routes";
@@ -10,8 +10,6 @@ import ProductCard from "@/components/shared/ProductCard.jsx";
 import CurrentViewersBadge from "@/components/shared/CurrentViewersBadge.jsx";
 import OrderNowMenu from "@/components/shared/OrderNowMenu.jsx";
 import { trackProductView, trackProductOrderClick, useProductSave } from "@/hooks/useProductAnalytics";
-
-const AUTO_SLIDE_INTERVAL_MS = 4000;
 
 export default function ProductPage() {
   const { productSlug } = useParams();
@@ -39,14 +37,20 @@ export default function ProductPage() {
     }
   };
 
-  // একাধিক ছবি থাকলে স্বয়ংক্রিয় ইমেজ স্লাইডার (কয়েক সেকেন্ড পরপর পরবর্তী ছবি দেখাবে)
-  useEffect(() => {
+  // আগে এখানে স্বয়ংক্রিয় (auto) ইমেজ স্লাইডার ছিল, যা কয়েক সেকেন্ড পরপর
+  // নিজে থেকেই পরের ছবি দেখাতো — এটা অপ্রয়োজনীয়ভাবে মোবাইল ডেটা/ব্যান্ডউইথ
+  // খরচ করছিল (প্রতিটি ছবি বারবার লোড/রি-রেন্ডার)। তাই সরিয়ে ম্যানুয়াল
+  // প্রেভ/নেক্সট অ্যারো বাটন ও থাম্বনেইল ক্লিকের মাধ্যমে ছবি বদলানোর ব্যবস্থা
+  // রাখা হয়েছে (নিচে goToPrevImage/goToNextImage ফাংশন দেখুন)।
+  const goToPrevImage = () => {
     if (allImages.length <= 1) return;
-    const timer = setInterval(() => {
-      setActiveImage((prev) => (prev + 1) % allImages.length);
-    }, AUTO_SLIDE_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [allImages.length]);
+    setActiveImage((prev) => (prev - 1 + allImages.length) % allImages.length);
+  };
+
+  const goToNextImage = () => {
+    if (allImages.length <= 1) return;
+    setActiveImage((prev) => (prev + 1) % allImages.length);
+  };
 
   useEffect(() => {
     setActiveImage(0);
@@ -68,13 +72,45 @@ export default function ProductPage() {
     <div className="container py-10">
       <div className="grid gap-8 md:grid-cols-2">
         <div>
-          <div className="aspect-square w-full overflow-hidden rounded-xl border border-border bg-secondary">
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-secondary">
             {allImages.length > 0 ? (
               <img src={allImages[activeImage]} alt={product.name} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <Package className="h-10 w-10" />
               </div>
+            )}
+
+            {/* একাধিক ছবি থাকলে ম্যানুয়াল প্রেভ/নেক্সট অ্যারো — অটো-স্লাইডের বদলে */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goToPrevImage}
+                  aria-label="আগের ছবি"
+                  className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground shadow-md backdrop-blur transition-colors hover:bg-background"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNextImage}
+                  aria-label="পরের ছবি"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground shadow-md backdrop-blur transition-colors hover:bg-background"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5">
+                  {allImages.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === activeImage ? "w-4 bg-primary" : "w-1.5 bg-background/70"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </div>
           {allImages.length > 1 && (

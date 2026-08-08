@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { User, Phone, Heart, KeyRound, CheckCircle2, ChevronLeft } from "lucide-react";
+import { User, Phone, Heart, KeyRound, CheckCircle2, ChevronLeft, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import ImageUploader from "@/components/shared/ImageUploader.jsx";
 import ChangePasswordForm from "@/components/shared/ChangePasswordForm.jsx";
@@ -29,6 +30,7 @@ export default function AccountPage() {
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
   const [gender, setGender] = useState(profile?.gender || "");
+  const [address, setAddress] = useState(profile?.address || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -52,6 +54,7 @@ export default function AccountPage() {
       full_name: fullName.trim(),
       phone: phone.trim(),
       gender: gender || null,
+      address: address.trim() || null,
       avatar_url: avatarUrl,
     });
     setSaving(false);
@@ -151,6 +154,21 @@ export default function AccountPage() {
                     {opt.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="address">ঠিকানা</Label>
+              <div className="relative">
+                <MapPin className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Textarea
+                  id="address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="আপনার বাসা/এলাকার ঠিকানা লিখুন"
+                  rows={2}
+                  className="pl-9"
+                />
               </div>
             </div>
 

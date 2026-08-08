@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import { formatDateBn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import {
+  ROLES,
   SELLER_STATUS,
   SELLER_STATUS_LABEL_BN,
   ACCOUNT_STATUS,
@@ -27,6 +29,15 @@ import {
 } from "@/constants/roles";
 
 export default function SellerManagePage() {
+  // BUGFIX: আগে এই পেজে (Seller Management) দোকানের "সর্বোচ্চ পণ্যের সীমা"
+  // শুধু রিড-অনলি টেক্সট হিসেবে দেখানো হতো — Super Admin এখান থেকে সরাসরি
+  // বাড়াতে/কমাতে পারতেন না (এডিট করার UI শুধু আলাদা "Users" পেজে ছিল, যা
+  // অ্যাডমিনরা খুঁজে পাচ্ছিলেন না)। এখন এখান থেকেও (Super Admin হলে)
+  // ইনপুট বক্সে সরাসরি বাড়ানো/কমানো যাবে — DB পলিসি/trigger আগে থেকেই
+  // শুধু Super Admin-কে অনুমতি দেয় (guard_max_products_override), তাই
+  // ব্যাকএন্ডে কোনো পরিবর্তন লাগেনি।
+  const { role: myRole } = useAuth();
+  const isSuperAdmin = myRole === ROLES.SUPER_ADMIN;
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
@@ -92,6 +103,24 @@ export default function SellerManagePage() {
     setSelected(null);
     setDetail(null);
     setActionError("");
+  };
+
+  // দোকানের সর্বোচ্চ পণ্যের সীমা পরিবর্তন — শুধু Super Admin
+  const updateMaxProducts = async (value) => {
+    if (!detail?.shop) return;
+    setBusy(true);
+    setActionError("");
+    const parsed = value === "" ? null : Math.max(1, parseInt(value, 10) || 1);
+    const { error } = await supabase
+      .from("shops")
+      .update({ max_products_override: parsed })
+      .eq("id", detail.shop.id);
+    setBusy(false);
+    if (error) {
+      setActionError(error.message);
+      return;
+    }
+    setDetail((prev) => ({ ...prev, shop: { ...prev.shop, max_products_override: parsed } }));
   };
 
   // সেলার অ্যাকাউন্ট Active/Deactivate করা — Admin ও Super Admin উভয়েই পারবেন
@@ -272,10 +301,26 @@ export default function SellerManagePage() {
 
                 {detail?.shop && (
                   <div className="rounded-lg border border-border p-3">
-                    <p className="font-medium">দোকান: {detail.shop.shop_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      সর্বোচ্চ পণ্যের সীমা: {detail.shop.max_products_override ?? 50}
-                    </p>
+                    <p className="mb-1 font-medium">দোকান: {detail.shop.shop_name}</p>
+                    {isSuperAdmin ? (
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-muted-foreground">সর্বোচ্চ পণ্যের সীমা:</label>
+                        <input
+                          key={detail.shop.id}
+                          type="number"
+                          min={1}
+                          disabled={busy}
+                          defaultValue={detail.shop.max_products_override ?? ""}
+                          placeholder="৫০ (ডিফল্ট)"
+                          className="w-24 rounded border border-border bg-background px-2 py-1 text-xs"
+                          onBlur={(e) => updateMaxProducts(e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        সর্বোচ্চ পণ্যের সীমা: {detail.shop.max_products_override ?? 50}
+                      </p>
+                    )}
                   </div>
                 )}
 

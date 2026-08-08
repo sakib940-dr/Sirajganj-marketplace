@@ -186,14 +186,10 @@ export default function Header() {
           )}
         </div>
 
-        {/* মোবাইল — সার্চ আইকন (সার্চ পেজে নিয়ে যায়), হ্যামবার্গার ইতিমধ্যে বাম পাশে আছে */}
-        <Link
-          to={ROUTES.SEARCH}
-          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary md:hidden"
-          aria-label="খুঁজুন"
-        >
-          <Search className="h-[19px] w-[19px]" />
-        </Link>
+        {/* মোবাইলে আলাদা কোনো হেডার সার্চ আইকন নেই — হোমপেজের হিরো সেকশনে
+            ইতিমধ্যে একটি কাজ করা সার্চ বক্স আছে (টাইপ করার সুযোগসহ), তাই এখানে
+            আলাদা আইকন রাখলে তা শুধু ফাঁকা রেজাল্ট পেজে নিয়ে যেত এবং টাইপ করার
+            কোনো সুযোগ থাকতো না — বিভ্রান্তিকর হওয়ায় সরিয়ে দেওয়া হলো। */}
       </div>
     </header>
   );
