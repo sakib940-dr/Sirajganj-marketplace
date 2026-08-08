@@ -1,11 +1,33 @@
 import { useEffect, useState } from "react";
-import { Store, Package, FolderTree, Users, ArrowUpRight } from "lucide-react";
+import {
+  Store,
+  Package,
+  FolderTree,
+  Users,
+  ArrowUpRight,
+  BadgeCheck,
+  ShieldAlert,
+  Eye,
+  Heart,
+  MousePointerClick,
+  Trophy,
+  CalendarClock,
+  CalendarDays,
+  CalendarRange,
+  BarChart3,
+} from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
+import { useSuperAdminAnalytics } from "@/hooks/admin/useSuperAdminAnalytics.js";
 import { ROLES } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  StatCard,
+  RankedListCard,
+  GrowthPeriodCard,
+} from "@/components/admin/analytics/SuperAdminAnalyticsWidgets.jsx";
 
 const STATS = [
   { key: "shops", label: "মোট দোকান", icon: Store, table: "shops" },
@@ -31,6 +53,18 @@ export default function AdminDashboard() {
       .eq("seller_status", "pending")
       .then(({ count }) => setPendingSellers(count ?? 0));
   }, []);
+
+  // Super Admin Analytics — শুধুমাত্র super_admin হলেই RPC কল হয় (enabled flag),
+  // তাই সাধারণ Admin-এর জন্য কোনো এক্সট্রা কোয়েরি বা রিয়েলটাইম সাবস্ক্রিপশন
+  // তৈরি হয় না, existing Admin dashboard আগের মতোই কাজ করে
+  const {
+    data: analytics,
+    loading: analyticsLoading,
+    error: analyticsError,
+  } = useSuperAdminAnalytics({ enabled: isSuperAdmin });
+
+  const totals = analytics?.totals ?? {};
+  const growth = analytics?.growth ?? {};
 
   return (
     <div className="space-y-6">
@@ -112,6 +146,153 @@ export default function AdminDashboard() {
           <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
         </Link>
       </div>
+
+      {/* ================= Super Admin Analytics ================= */}
+      {isSuperAdmin && (
+        <div className="space-y-6 border-t border-border pt-6">
+          <div>
+            <h2
+              className="flex items-center gap-2 text-lg font-bold"
+              style={{ fontFamily: "'Tiro Bangla', serif" }}
+            >
+              <BarChart3 className="h-5 w-5 text-primary" />
+              মার্কেটপ্লেস অ্যানালিটিক্স
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              পুরো মার্কেটপ্লেসের সার্বিক পরিসংখ্যান — স্বয়ংক্রিয়ভাবে আপডেট হয় (near real-time)
+            </p>
+            {analyticsError && (
+              <p className="mt-2 text-sm text-destructive">তথ্য লোড করা যায়নি: {analyticsError}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <StatCard
+              title="মোট ইউজার"
+              icon={Users}
+              value={totals.total_users ?? 0}
+              loading={analyticsLoading}
+            />
+            <StatCard
+              title="অ-ভেরিফাইড সেলার আবেদন"
+              icon={ShieldAlert}
+              value={totals.total_unverified_seller_applications ?? 0}
+              loading={analyticsLoading}
+            />
+            <StatCard
+              title="ভেরিফাইড সেলার"
+              icon={BadgeCheck}
+              value={totals.total_verified_sellers ?? 0}
+              loading={analyticsLoading}
+            />
+            <StatCard
+              title="মোট পণ্য"
+              icon={Package}
+              value={totals.total_products ?? 0}
+              loading={analyticsLoading}
+            />
+            <StatCard
+              title="মোট পণ্য ভিউ"
+              icon={Eye}
+              value={totals.total_product_views ?? 0}
+              loading={analyticsLoading}
+            />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <RankedListCard
+              title="টপ ১০ সেলার (অর্ডার ক্লিক অনুযায়ী)"
+              icon={Trophy}
+              loading={analyticsLoading}
+              emptyLabel="এখনো কোনো অর্ডার ক্লিক নেই"
+              items={(analytics?.top_sellers ?? []).map((s) => ({
+                id: s.shop_id,
+                imageUrl: s.logo_url,
+                title: s.shop_name,
+                metricValue: s.total_order_clicks,
+                metricLabel: "ক্লিক",
+              }))}
+            />
+            <RankedListCard
+              title="টপ ক্যাটাগরি"
+              icon={FolderTree}
+              loading={analyticsLoading}
+              emptyLabel="এখনো কোনো পণ্য নেই"
+              items={(analytics?.top_categories ?? []).map((c) => ({
+                id: c.id,
+                title: c.name,
+                subtitle: `${c.total_views} ভিউ`,
+                metricValue: c.product_count,
+                metricLabel: "পণ্য",
+              }))}
+            />
+            <RankedListCard
+              title="টপ ১০ সর্বাধিক দেখা পণ্য"
+              icon={Eye}
+              loading={analyticsLoading}
+              emptyLabel="এখনো কোনো ভিউ নেই"
+              items={(analytics?.top_viewed_products ?? []).map((p) => ({
+                id: p.id,
+                imageUrl: p.thumbnail_url,
+                title: p.name,
+                subtitle: p.shop_name,
+                metricValue: p.view_count,
+                metricLabel: "ভিউ",
+              }))}
+            />
+            <RankedListCard
+              title="টপ ১০ সর্বাধিক সেভ করা পণ্য"
+              icon={Heart}
+              loading={analyticsLoading}
+              emptyLabel="এখনো কোনো সেভ নেই"
+              items={(analytics?.top_saved_products ?? []).map((p) => ({
+                id: p.id,
+                imageUrl: p.thumbnail_url,
+                title: p.name,
+                subtitle: p.shop_name,
+                metricValue: p.save_count,
+                metricLabel: "সেভ",
+              }))}
+            />
+          </div>
+
+          <div>
+            <h3 className="mb-3 text-base font-semibold">গ্রোথ সামারি</h3>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <GrowthPeriodCard
+                title="দৈনিক"
+                icon={CalendarClock}
+                loading={analyticsLoading}
+                stats={[
+                  { label: "নতুন ইউজার", value: growth.daily?.new_users ?? 0 },
+                  { label: "নতুন সেলার আবেদন", value: growth.daily?.new_seller_applications ?? 0 },
+                  { label: "নতুন পণ্য", value: growth.daily?.new_products ?? 0 },
+                ]}
+              />
+              <GrowthPeriodCard
+                title="সাপ্তাহিক"
+                icon={CalendarDays}
+                loading={analyticsLoading}
+                stats={[
+                  { label: "নতুন ইউজার", value: growth.weekly?.new_users ?? 0 },
+                  { label: "নতুন সেলার আবেদন", value: growth.weekly?.new_seller_applications ?? 0 },
+                  { label: "নতুন পণ্য", value: growth.weekly?.new_products ?? 0 },
+                ]}
+              />
+              <GrowthPeriodCard
+                title="মাসিক"
+                icon={CalendarRange}
+                loading={analyticsLoading}
+                stats={[
+                  { label: "নতুন ইউজার", value: growth.monthly?.new_users ?? 0 },
+                  { label: "নতুন সেলার আবেদন", value: growth.monthly?.new_seller_applications ?? 0 },
+                  { label: "নতুন পণ্য", value: growth.monthly?.new_products ?? 0 },
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
