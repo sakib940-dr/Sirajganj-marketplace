@@ -36,6 +36,10 @@ export default function Footer() {
             <li><Link to={ROUTES.HOME}>হোমপেজ</Link></li>
             <li><Link to={ROUTES.SEARCH}>পণ্য খুঁজুন</Link></li>
             <li><Link to={ROUTES.REGISTER}>সেলার হিসেবে যোগ দিন</Link></li>
+            <li><Link to={ROUTES.ABOUT}>আমাদের সম্পর্কে</Link></li>
+            <li><Link to={ROUTES.FAQ}>সচরাচর জিজ্ঞাসিত প্রশ্ন</Link></li>
+            <li><Link to={ROUTES.TERMS}>শর্তাবলী</Link></li>
+            <li><Link to={ROUTES.PRIVACY}>প্রাইভেসি পলিসি</Link></li>
           </ul>
         </div>
 

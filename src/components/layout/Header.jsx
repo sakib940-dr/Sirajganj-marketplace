@@ -24,6 +24,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu.jsx";
+import MobileSideMenu from "@/components/layout/MobileSideMenu.jsx";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useMobileMenu } from "@/context/MobileMenuContext.jsx";
@@ -33,10 +34,10 @@ import { cn } from "@/lib/utils";
 
 export default function Header() {
   const [query, setQuery] = useState("");
-  // মোবাইল মেনুর open/close state এখন MobileMenuContext থেকে আসছে, যাতে
-  // Bottom Navigation-এর "☰ মেনু" ট্যাব থেকেও এই একই প্যানেল খোলা যায় —
-  // আলাদা ডুপ্লিকেট মেনু-লজিক বানানো হয়নি।
-  const { isOpen: mobileOpen, close: closeMobileMenu, toggle: toggleMobileMenu } = useMobileMenu();
+  // মোবাইল মেনুর open/close state MobileMenuContext থেকে আসছে, যাতে
+  // Header-এর হ্যামবার্গার (top-left) এবং ভবিষ্যতে অন্য কোথাও থেকেও একই
+  // MobileSideMenu drawer খোলা/বন্ধ করা যায় — ডুপ্লিকেট মেনু-লজিক নেই।
+  const { isOpen: mobileOpen, toggle: toggleMobileMenu } = useMobileMenu();
   const { isLoggedIn, role, profile, signOut } = useAuth();
   const { settings } = useSiteSettings();
   const navigate = useNavigate();
@@ -45,7 +46,6 @@ export default function Header() {
     e.preventDefault();
     if (query.trim()) {
       navigate(`${ROUTES.SEARCH}?q=${encodeURIComponent(query.trim())}`);
-      closeMobileMenu();
     }
   };
 
@@ -55,29 +55,43 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="kantha-divider" />
-      <div className="container flex h-16 items-center gap-3 md:gap-5">
-        {/* লোগো/ব্র্যান্ড — অপরিবর্তিত */}
+      <div className="container flex h-14 items-center gap-2.5 md:h-16 md:gap-5">
+        {/* মোবাইল হ্যামবার্গার — বাম পাশে, সবার প্রথমে */}
+        <button
+          type="button"
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary md:hidden",
+            mobileOpen && "bg-secondary"
+          )}
+          onClick={() => toggleMobileMenu()}
+          aria-label={mobileOpen ? "মেনু বন্ধ করুন" : "মেনু খুলুন"}
+          aria-expanded={mobileOpen}
+        >
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+
+        {/* লোগো/ব্র্যান্ড */}
         <Link to={ROUTES.HOME} className="flex shrink-0 items-center gap-2">
           {settings.site_logo_url ? (
             <img
               src={settings.site_logo_url}
               alt={settings.site_name}
-              className="h-9 w-9 rounded-lg object-cover"
+              className="h-8 w-8 rounded-lg object-cover md:h-9 md:w-9"
             />
           ) : (
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Store className="h-5 w-5" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground md:h-9 md:w-9">
+              <Store className="h-4.5 w-4.5 md:h-5 md:w-5" />
             </span>
           )}
           <span
-            className="text-lg font-bold leading-none tracking-tight text-primary md:text-xl"
+            className="text-base font-bold leading-none tracking-tight text-primary md:text-xl"
             style={{ fontFamily: "'Tiro Bangla', serif" }}
           >
             {settings.site_name}
           </span>
         </Link>
 
-        {/* সার্চ — কম্প্যাক্ট, রাউন্ডেড, প্রিমিয়াম লুক */}
+        {/* সার্চ — ডেস্কটপে হেডারে ইনলাইন, কম্প্যাক্ট প্রিমিয়াম লুক */}
         <form onSubmit={handleSearch} className="relative hidden flex-1 max-w-md md:block">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -104,8 +118,12 @@ export default function Header() {
                     type="button"
                     className="flex items-center gap-2 rounded-full border border-border/80 py-1 pl-1 pr-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/70"
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                      {avatarInitial}
+                    <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        avatarInitial
+                      )}
                     </span>
                     <span className="max-w-[9rem] truncate">{displayName}</span>
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -131,7 +149,7 @@ export default function Header() {
                   <DropdownMenuItem asChild>
                     <Link to={ROUTES.ACCOUNT}>
                       <KeyRound className="h-4 w-4 text-muted-foreground" />
-                      পাসওয়ার্ড পরিবর্তন
+                      প্রোফাইল / পাসওয়ার্ড
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -169,117 +187,17 @@ export default function Header() {
           )}
         </div>
 
-        {/* মোবাইল হ্যামবার্গার — সবসময় অ্যাক্সেসিবল */}
-        <button
-          type="button"
-          className={cn(
-            "ml-auto flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary md:hidden",
-            mobileOpen && "bg-secondary"
-          )}
-          onClick={() => toggleMobileMenu()}
-          aria-label={mobileOpen ? "মেনু বন্ধ করুন" : "মেনু খুলুন"}
-          aria-expanded={mobileOpen}
+        {/* মোবাইল — সার্চ আইকন (সার্চ পেজে নিয়ে যায়), হ্যামবার্গার ইতিমধ্যে বাম পাশে আছে */}
+        <Link
+          to={ROUTES.SEARCH}
+          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary md:hidden"
+          aria-label="খুঁজুন"
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+          <Search className="h-[19px] w-[19px]" />
+        </Link>
       </div>
 
-      {mobileOpen && (
-        <div className="container flex flex-col gap-4 border-t border-border py-4 md:hidden">
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="দোকান বা পণ্য খুঁজুন..."
-              className="h-10 rounded-full border-border/80 bg-secondary/40 pl-10 shadow-none"
-            />
-          </form>
-
-          {isLoggedIn ? (
-            <div className="flex flex-col gap-1">
-              <div className="mb-1 flex items-center gap-2.5 rounded-lg bg-secondary/50 px-3 py-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                  {avatarInitial}
-                </span>
-                <span className="truncate text-sm font-semibold">{displayName}</span>
-              </div>
-
-              <Link
-                to={ROUTES.SAVED}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/90 transition-colors hover:bg-secondary"
-                onClick={() => closeMobileMenu()}
-              >
-                <Heart className="h-4 w-4 text-muted-foreground" />
-                সংরক্ষিত
-              </Link>
-              {isAdminOrAbove(role) && (
-                <Link
-                  to={ROUTES.ADMIN}
-                  className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/90 transition-colors hover:bg-secondary"
-                  onClick={() => closeMobileMenu()}
-                >
-                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                  অ্যাডমিন প্যানেল
-                </Link>
-              )}
-              <Link
-                to={ROUTES.DASHBOARD}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/90 transition-colors hover:bg-secondary"
-                onClick={() => closeMobileMenu()}
-              >
-                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                {role === ROLES.SELLER ? "সেলার ড্যাশবোর্ড" : "ড্যাশবোর্ড"}
-              </Link>
-              <Link
-                to={ROUTES.ACCOUNT}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/90 transition-colors hover:bg-secondary"
-                onClick={() => closeMobileMenu()}
-              >
-                <KeyRound className="h-4 w-4 text-muted-foreground" />
-                পাসওয়ার্ড পরিবর্তন
-              </Link>
-
-              <div className="my-1 border-t border-border" />
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-center gap-2 border-destructive/30 text-destructive hover:bg-destructive/5"
-                onClick={signOut}
-              >
-                <LogOut className="h-4 w-4" />
-                লগ আউট
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="w-full justify-center border-primary/25 text-primary shadow-sm hover:border-primary/50 hover:bg-primary/5"
-                onClick={() => closeMobileMenu()}
-              >
-                <Link to={ROUTES.LOGIN}>
-                  <User className="h-4 w-4" />
-                  অ্যাকাউন্টে প্রবেশ
-                </Link>
-              </Button>
-              <Button
-                size="sm"
-                asChild
-                className="w-full justify-center bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-md shadow-accent/30"
-                onClick={() => closeMobileMenu()}
-              >
-                <Link to={ROUTES.REGISTER}>
-                  <Sparkles className="h-4 w-4" />
-                  সেলার হোন
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+      <MobileSideMenu />
     </header>
   );
 }

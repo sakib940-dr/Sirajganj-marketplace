@@ -109,6 +109,18 @@ export function AuthProvider({ children }) {
     if (uid) await fetchProfile(uid);
   };
 
+  // ভিজিটর নিজের প্রোফাইল তথ্য (নাম, ফোন, জেন্ডার, অ্যাভাটার) আপডেট করে —
+  // role/seller_status এখানে ছোঁয়া হয় না (সেটা trigger দিয়ে already সুরক্ষিত)।
+  // বিদ্যমান "profiles_update_own" RLS পলিসি (auth.uid() = id) ব্যবহার করেই
+  // এটি কাজ করে, তাই কোনো নতুন পলিসি লাগেনি।
+  const updateProfile = async (fields) => {
+    const uid = session?.user?.id;
+    if (!uid) return { error: new Error("লগইন করা নেই") };
+    const { error } = await supabase.from("profiles").update(fields).eq("id", uid);
+    if (!error) await fetchProfile(uid);
+    return { error };
+  };
+
   const value = {
     session,
     user: session?.user ?? null,
@@ -122,6 +134,7 @@ export function AuthProvider({ children }) {
     signUp,
     signOut,
     refreshProfile,
+    updateProfile,
     sendPasswordResetEmail,
     updatePassword,
   };

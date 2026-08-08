@@ -9,7 +9,9 @@ import { ROLES } from "@/constants/roles";
 // Public
 import HomePage from "@/pages/public/HomePage.jsx";
 import CategoryPage from "@/pages/public/CategoryPage.jsx";
+import CategoriesListPage from "@/pages/public/CategoriesListPage.jsx";
 import ShopPage from "@/pages/public/ShopPage.jsx";
+import ShopsListPage from "@/pages/public/ShopsListPage.jsx";
 import ProductPage from "@/pages/public/ProductPage.jsx";
 import SearchResultPage from "@/pages/public/SearchResultPage.jsx";
 import LoginPage from "@/pages/public/LoginPage.jsx";
@@ -18,6 +20,12 @@ import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage.jsx";
 import ResetPasswordPage from "@/pages/public/ResetPasswordPage.jsx";
 import SavedItemsPage from "@/pages/public/SavedItemsPage.jsx";
 import AccountPage from "@/pages/public/AccountPage.jsx";
+import AboutPage from "@/pages/public/AboutPage.jsx";
+import TermsPage from "@/pages/public/TermsPage.jsx";
+import PrivacyPage from "@/pages/public/PrivacyPage.jsx";
+import FaqPage from "@/pages/public/FaqPage.jsx";
+import HelpPage from "@/pages/public/HelpPage.jsx";
+import FeedbackPage from "@/pages/public/FeedbackPage.jsx";
 import NotFoundPage from "@/pages/public/NotFoundPage.jsx";
 
 // Seller
@@ -46,7 +54,9 @@ export default function AppRoutes() {
       {/* Public */}
       <Route element={<MainLayout />}>
         <Route path={ROUTES.HOME} element={<HomePage />} />
+        <Route path={ROUTES.CATEGORIES} element={<CategoriesListPage />} />
         <Route path={ROUTES.CATEGORY} element={<CategoryPage />} />
+        <Route path={ROUTES.SHOPS} element={<ShopsListPage />} />
         <Route path={ROUTES.SHOP} element={<ShopPage />} />
         <Route path={ROUTES.PRODUCT} element={<ProductPage />} />
         <Route path={ROUTES.SEARCH} element={<SearchResultPage />} />
@@ -54,6 +64,12 @@ export default function AppRoutes() {
         <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
         <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+        <Route path={ROUTES.ABOUT} element={<AboutPage />} />
+        <Route path={ROUTES.TERMS} element={<TermsPage />} />
+        <Route path={ROUTES.PRIVACY} element={<PrivacyPage />} />
+        <Route path={ROUTES.FAQ} element={<FaqPage />} />
+        <Route path={ROUTES.HELP} element={<HelpPage />} />
+        <Route path={ROUTES.FEEDBACK} element={<FeedbackPage />} />
         <Route
           path={ROUTES.SAVED}
           element={
