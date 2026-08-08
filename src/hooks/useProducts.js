@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { getSearchSynonyms, expandSearchTerms } from "@/lib/searchSynonyms";
 
 const PRODUCT_SELECT =
-  "*, shops:shop_id ( shop_name, slug, whatsapp_number, facebook_link ), categories:category_id ( name, slug )";
+  "*, shops:shop_id ( shop_name, slug, whatsapp_number, facebook_link, messenger_link ), categories:category_id ( name, slug )";
 
 export function useLatestProducts({ limit = 8 } = {}) {
   const [products, setProducts] = useState([]);
@@ -177,7 +177,10 @@ export function useProductSearch(query) {
       }
 
       const textFilter = terms
-        .map((t) => `name.ilike.%${t}%,description.ilike.%${t}%`)
+        .map(
+          (t) =>
+            `name.ilike.%${t}%,description.ilike.%${t}%,name_en.ilike.%${t}%,name_bn.ilike.%${t}%,search_keywords.ilike.%${t}%`
+        )
         .join(",");
       const categoryFilter = terms.map((t) => `name.ilike.%${t}%`).join(",");
 

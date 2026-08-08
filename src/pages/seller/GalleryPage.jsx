@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { X, Images } from "lucide-react";
+import { Images } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import ImageUploader from "@/components/shared/ImageUploader.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
+
+const MAX_GALLERY_IMAGES = 4;
 
 export default function GalleryPage() {
   const { user } = useAuth();
@@ -32,7 +34,7 @@ export default function GalleryPage() {
   }, [user]);
 
   const addImage = async (url) => {
-    if (!url || !shopId) return;
+    if (!url || !shopId || images.length >= MAX_GALLERY_IMAGES) return;
     const { data } = await supabase
       .from("shop_gallery")
       .insert({ shop_id: shopId, image_url: url, sort_order: images.length })
@@ -44,6 +46,19 @@ export default function GalleryPage() {
   const removeImage = async (id) => {
     await supabase.from("shop_gallery").delete().eq("id", id);
     setImages((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const replaceImage = async (id, url) => {
+    const { data } = await supabase.from("shop_gallery").update({ image_url: url }).eq("id", id).select().single();
+    if (data) setImages((prev) => prev.map((i) => (i.id === id ? data : i)));
+  };
+
+  // প্রতিটা বিদ্যমান ছবির নিজস্ব ImageUploader-এ ব্যবহৃত হয় — নতুন ছবি সিলেক্ট
+  // করলে পুরনোটা replace হয়ে যায়, X চাপলে remove হয় (ImageUploader-এর
+  // বিল্ট-ইন আচরণ: খালি URL মানে মুছে ফেলা)
+  const handleImageChange = (id) => (url) => {
+    if (!url) removeImage(id);
+    else replaceImage(id, url);
   };
 
   if (loading) return <LoadingSpinner label="লোড হচ্ছে..." />;
@@ -58,23 +73,25 @@ export default function GalleryPage() {
         <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
           দোকানের গ্যালারি
         </h1>
-        <p className="text-sm text-muted-foreground">আপনার দোকান/পণ্যের অতিরিক্ত ছবি এখানে যোগ করুন</p>
+        <p className="text-sm text-muted-foreground">
+          আপনার দোকান/পণ্যের অতিরিক্ত ছবি এখানে যোগ করুন — সর্বোচ্চ {MAX_GALLERY_IMAGES}টি ({images.length}/
+          {MAX_GALLERY_IMAGES} ব্যবহৃত হয়েছে)। বিদ্যমান ছবির উপর নতুন ছবি আপলোড করলে সেটা বদলে (replace) যাবে।
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-4">
         {images.map((img) => (
-          <div key={img.id} className="relative h-28 w-28 overflow-hidden rounded-xl border border-border">
-            <img src={img.image_url} alt="" className="h-full w-full object-cover" />
-            <button
-              type="button"
-              onClick={() => removeImage(img.id)}
-              className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          <ImageUploader
+            key={img.id}
+            bucket="shop-gallery"
+            folder={user.id}
+            value={img.image_url}
+            onUploaded={handleImageChange(img.id)}
+          />
         ))}
-        <ImageUploader bucket="shop-gallery" folder={user.id} value="" onUploaded={addImage} />
+        {images.length < MAX_GALLERY_IMAGES && (
+          <ImageUploader bucket="shop-gallery" folder={user.id} value="" onUploaded={addImage} />
+        )}
       </div>
     </div>
   );

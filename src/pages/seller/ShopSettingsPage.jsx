@@ -24,6 +24,7 @@ const EMPTY_SHOP = {
   address: "",
   google_map_link: "",
   facebook_link: "",
+  messenger_link: "",
 };
 
 export default function ShopSettingsPage() {
@@ -183,6 +184,14 @@ export default function ShopSettingsPage() {
                 }}
               />
               <p className="text-xs text-muted-foreground">আপনার শপ পেজ হবে: /shop/{shop.slug || "আপনার-লিংক"}</p>
+              <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-3 shadow-sm">
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">নির্দেশনা:</span> শপ লিংক (slug) সবসময় ইংরেজি
+                  অক্ষরে লিখুন। এই লিংকটি কপি করে আপনার ফেসবুক পোস্ট ও ফেসবুক গ্রুপের পোস্টে পেস্ট করুন — যে
+                  কেউ লিংকে ক্লিক/ভিজিট করলে আপনার দোকানের সব পণ্য একসাথে দেখতে পারবে। বিক্রি বাড়াতে
+                  নিয়মিত এই লিংকটি ব্যবহার করুন।
+                </p>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="about">দোকান সম্পর্কে</Label>
@@ -228,6 +237,18 @@ export default function ShopSettingsPage() {
             <div className="space-y-1.5">
               <Label htmlFor="facebook_link">ফেসবুক পেজ লিংক</Label>
               <Input id="facebook_link" value={shop.facebook_link || ""} onChange={(e) => update("facebook_link", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="messenger_link">ম্যাসেঞ্জার লিংক</Label>
+              <Input
+                id="messenger_link"
+                placeholder="m.me/আপনার-ইউজারনেম অথবা শুধু ইউজারনেম"
+                value={shop.messenger_link || ""}
+                onChange={(e) => update("messenger_link", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                এখানে দেওয়া লিংকেই ক্রেতারা "ম্যাসেঞ্জারে অর্ডার করুন" বাটনে ক্লিক করলে যাবে।
+              </p>
             </div>
           </CardContent>
         </Card>

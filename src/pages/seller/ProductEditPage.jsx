@@ -27,6 +27,9 @@ const EMPTY_PRODUCT = {
   discount_value: "",
   stock_quantity: "",
   sold_count: "",
+  name_en: "",
+  name_bn: "",
+  search_keywords: "",
 };
 
 const PRODUCT_IMAGE_MAX_KB = 1024; // ১ MB পর্যন্ত সিলেক্ট করা যাবে, স্বয়ংক্রিয়ভাবে কমপ্রেস হয়ে যাবে
@@ -340,6 +343,46 @@ export default function ProductEditPage() {
                 onChange={(e) => update("description", e.target.value)}
                 className="flex w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">সার্চ মেটাডেটা (ঐচ্ছিক)</CardTitle>
+            <CardDescription>এই তথ্য পণ্যের মূল নাম/বিবরণ থেকে আলাদা — শুধু সার্চে সহজে খুঁজে পেতে সাহায্য করে</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-3 shadow-sm">
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground">এখানে কী দেবেন:</span> ভিজিটর বাংলা, ইংরেজি বা কাছাকাছি
+                কোনো শব্দ দিয়ে সার্চ করলেও যেন আপনার পণ্যটি খুঁজে পান, তার জন্য নিচের ঘরগুলো পূরণ করুন।
+                <br />
+                <span className="font-medium text-foreground">উদাহরণ:</span> ইংরেজি নাম: Rice Cooker · বাংলা নাম:
+                রাইস কুকার · সমার্থক শব্দ: cooker, rice cooker, ভাত রান্নার মেশিন, কুকার
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="name_en">ইংরেজি পণ্যের নাম</Label>
+                <Input id="name_en" placeholder="Rice Cooker" value={product.name_en || ""} onChange={(e) => update("name_en", e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="name_bn">বাংলা পণ্যের নাম</Label>
+                <Input id="name_bn" placeholder="রাইস কুকার" value={product.name_bn || ""} onChange={(e) => update("name_bn", e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="search_keywords">সম্পর্কিত সমার্থক শব্দ / সার্চ কীওয়ার্ড</Label>
+              <textarea
+                id="search_keywords"
+                rows={2}
+                placeholder="cooker, rice cooker, ভাত রান্নার মেশিন, কুকার"
+                value={product.search_keywords || ""}
+                onChange={(e) => update("search_keywords", e.target.value)}
+                className="flex w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              <p className="text-xs text-muted-foreground">একাধিক শব্দ কমা (,) দিয়ে আলাদা করে লিখুন</p>
             </div>
           </CardContent>
         </Card>

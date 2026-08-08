@@ -45,9 +45,40 @@ function buildWhatsappUrl(whatsappNumber, message) {
   return `https://wa.me/${digits}${query}`;
 }
 
-function buildMessengerUrl(facebookLink) {
+function buildMessengerUrlFromFacebookLink(facebookLink) {
   const id = parseFacebookIdentifier(facebookLink);
   return id ? `https://m.me/${id}` : null;
+}
+
+// সেলারের ডেডিকেটেড Messenger লিংক ফিল্ড থেকে একটা ক্যানোনিক্যাল https://m.me/<id>
+// লিংক বানায়। সেলার বিভিন্নভাবে লিখতে পারেন — শুধু ইউজারনেম, m.me লিংক,
+// messenger.com/t/... লিংক, এমনকি ভুলবশত ফেসবুক পেজ লিংক — সব কয়টা ফরম্যাটই
+// এখানে হ্যান্ডেল করা হয়েছে।
+export function normalizeMessengerLink(messengerLink) {
+  if (!messengerLink) return null;
+  const trimmed = messengerLink.trim();
+  if (!trimmed) return null;
+
+  // m.me বা messenger.com লিংক পেস্ট করলে সেখান থেকে আইডি বের করা হচ্ছে
+  if (/(^|[./])m\.me([/?]|$)|messenger\.com/i.test(trimmed)) {
+    try {
+      const url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+      const segments = url.pathname.split("/").filter(Boolean).filter((s) => s.toLowerCase() !== "t");
+      const id = segments[segments.length - 1];
+      return id ? `https://m.me/${id}` : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // ভুলবশত ফেসবুক পেজ লিংক দিলে সেখান থেকেও আইডি বের করার চেষ্টা করা হচ্ছে
+  const fbId = parseFacebookIdentifier(trimmed);
+  if (fbId) return `https://m.me/${fbId}`;
+
+  // নাহলে এটাকে সরাসরি ইউজারনেম/পেজ-আইডি হিসেবে ধরে নেওয়া হচ্ছে
+  const plain = trimmed.replace(/^https?:\/\//i, "").replace(/^\/+|\/+$/g, "");
+  if (!plain || /\s/.test(plain)) return null;
+  return `https://m.me/${plain}`;
 }
 
 /**
@@ -75,17 +106,22 @@ export function getOrderChannels(shop, whatsappMessage) {
       url: shop.facebook_link,
       colorClass: "bg-[#1877F2]",
     });
+  }
 
-    const messengerUrl = buildMessengerUrl(shop.facebook_link);
-    if (messengerUrl) {
-      channels.push({
-        id: "messenger",
-        label: "ম্যাসেঞ্জারে অর্ডার করুন",
-        shortLabel: "অর্ডার করুন",
-        url: messengerUrl,
-        colorClass: "bg-[#0084FF]",
-      });
-    }
+  // ডেডিকেটেড messenger_link ফিল্ড থাকলে সেটাই ব্যবহার করা হয়; না থাকলে (পুরনো
+  // দোকানের ক্ষেত্রে) আগের মতো facebook_link থেকে অনুমান করা হয় — backward compatible
+  const messengerUrl = shop?.messenger_link
+    ? normalizeMessengerLink(shop.messenger_link)
+    : buildMessengerUrlFromFacebookLink(shop?.facebook_link);
+
+  if (messengerUrl) {
+    channels.push({
+      id: "messenger",
+      label: "ম্যাসেঞ্জারে অর্ডার করুন",
+      shortLabel: "অর্ডার করুন",
+      url: messengerUrl,
+      colorClass: "bg-[#0084FF]",
+    });
   }
 
   return channels;
