@@ -35,7 +35,7 @@ const EMPTY_PRODUCT = {
 const PRODUCT_IMAGE_MAX_KB = 1024; // ১ MB পর্যন্ত সিলেক্ট করা যাবে, স্বয়ংক্রিয়ভাবে কমপ্রেস হয়ে যাবে
 const PRODUCT_IMAGE_COMPRESS_MIN_KB = 100;
 const PRODUCT_IMAGE_COMPRESS_MAX_KB = 200;
-const MAX_PRODUCTS_PER_SHOP = 50;
+const DEFAULT_MAX_PRODUCTS_PER_SHOP = 50;
 const MAX_EXTRA_IMAGES = 3; // + ১টি মূল ছবি = সর্বোচ্চ ৪টি
 
 export default function ProductEditPage() {
@@ -57,11 +57,20 @@ export default function ProductEditPage() {
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEditing);
 
   const [productCount, setProductCount] = useState(0);
+  const [maxProducts, setMaxProducts] = useState(DEFAULT_MAX_PRODUCTS_PER_SHOP);
 
   useEffect(() => {
     async function load() {
-      const { data: shop } = await supabase.from("shops").select("id").eq("owner_id", user.id).maybeSingle();
+      const { data: shop } = await supabase
+        .from("shops")
+        .select("id, max_products_override")
+        .eq("owner_id", user.id)
+        .maybeSingle();
       setShopId(shop?.id ?? null);
+      // Super Admin এই সীমা কমাতে/বাড়াতে পারেন (shops.max_products_override) —
+      // সেট না থাকলে ডিফল্ট ৫০। প্রতিবার ফর্ম লোডে সরাসরি ডাটাবেস থেকে আনা হয়
+      // বলে Admin পরিবর্তন করলে সেলার সাথে সাথেই (পরের লোডে) নতুন সীমা দেখতে পাবেন।
+      setMaxProducts(shop?.max_products_override ?? DEFAULT_MAX_PRODUCTS_PER_SHOP);
 
       if (shop?.id && !isEditing) {
         const { count } = await supabase
@@ -144,8 +153,8 @@ export default function ProductEditPage() {
       setError("প্রথমে দোকানের তথ্য পূরণ করুন।");
       return;
     }
-    if (!isEditing && productCount >= MAX_PRODUCTS_PER_SHOP) {
-      setError(`একটি দোকান সর্বোচ্চ ${MAX_PRODUCTS_PER_SHOP}টি পণ্য যোগ করতে পারবে।`);
+    if (!isEditing && productCount >= maxProducts) {
+      setError(`একটি দোকান সর্বোচ্চ ${maxProducts}টি পণ্য যোগ করতে পারবে।`);
       return;
     }
 
@@ -223,9 +232,9 @@ export default function ProductEditPage() {
         {isEditing ? "পণ্য এডিট করুন" : "নতুন পণ্য যোগ করুন"}
       </h1>
 
-      {!isEditing && productCount >= MAX_PRODUCTS_PER_SHOP && (
+      {!isEditing && productCount >= maxProducts && (
         <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-          আপনার দোকানে ইতিমধ্যে {MAX_PRODUCTS_PER_SHOP}টি পণ্য যোগ করা হয়েছে — সর্বোচ্চ সীমায় পৌঁছে গেছেন। নতুন পণ্য যোগ করতে হলে আগে কিছু পণ্য মুছুন।
+          আপনার দোকানে ইতিমধ্যে {maxProducts}টি পণ্য যোগ করা হয়েছে — সর্বোচ্চ সীমায় পৌঁছে গেছেন। নতুন পণ্য যোগ করতে হলে আগে কিছু পণ্য মুছুন।
         </p>
       )}
 
@@ -464,7 +473,7 @@ export default function ProductEditPage() {
         {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={saving || (!isEditing && productCount >= MAX_PRODUCTS_PER_SHOP)} size="lg">
+          <Button type="submit" disabled={saving || (!isEditing && productCount >= maxProducts)} size="lg">
             {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saving ? "সংরক্ষণ হচ্ছে..." : saved ? "সংরক্ষিত হয়েছে" : "সংরক্ষণ করুন"}
           </Button>

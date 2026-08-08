@@ -11,7 +11,7 @@ import { ROUTES, editProductPath } from "@/constants/routes";
 import { formatPriceBn, getDiscountedPrice } from "@/lib/utils";
 import { ROLES, SELLER_STATUS, isAdminOrAbove } from "@/constants/roles";
 
-const MAX_PRODUCTS_PER_SHOP = 50;
+const DEFAULT_MAX_PRODUCTS_PER_SHOP = 50;
 
 export default function ProductListPage() {
   const { user, role, sellerStatus } = useAuth();
@@ -19,12 +19,17 @@ export default function ProductListPage() {
     isAdminOrAbove(role) || (role === ROLES.SELLER && sellerStatus === SELLER_STATUS.APPROVED);
   const [products, setProducts] = useState([]);
   const [shopId, setShopId] = useState(null);
+  const [maxProducts, setMaxProducts] = useState(DEFAULT_MAX_PRODUCTS_PER_SHOP);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: shop } = await supabase.from("shops").select("id").eq("owner_id", user.id).maybeSingle();
+    const { data: shop } = await supabase
+      .from("shops")
+      .select("id, max_products_override")
+      .eq("owner_id", user.id)
+      .maybeSingle();
     if (!shop) {
       setShopId(null);
       setProducts([]);
@@ -32,6 +37,10 @@ export default function ProductListPage() {
       return;
     }
     setShopId(shop.id);
+    // Super Admin দোকান-ভিত্তিক এই সীমা কমাতে/বাড়াতে পারেন (max_products_override) —
+    // সেট করা না থাকলে ডিফল্ট ৫০। প্রতিবার পেজ লোডে সরাসরি ডাটাবেস থেকে আনা হয় বলে
+    // Admin পরিবর্তন করলে সেলার পরবর্তী লোডেই আপডেটেড সীমা দেখতে পাবেন।
+    setMaxProducts(shop.max_products_override ?? DEFAULT_MAX_PRODUCTS_PER_SHOP);
     const { data } = await supabase
       .from("products")
       .select("*")
@@ -95,13 +104,13 @@ export default function ProductListPage() {
             পণ্যসমূহ
           </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {products.length} / {MAX_PRODUCTS_PER_SHOP}টি পণ্য যোগ করা হয়েছে
+            {products.length} / {maxProducts}টি পণ্য যোগ করা হয়েছে
           </p>
         </div>
-        <Button asChild size="sm" disabled={products.length >= MAX_PRODUCTS_PER_SHOP}>
+        <Button asChild size="sm" disabled={products.length >= maxProducts}>
           <Link
             to={ROUTES.DASHBOARD_PRODUCT_NEW}
-            onClick={(e) => products.length >= MAX_PRODUCTS_PER_SHOP && e.preventDefault()}
+            onClick={(e) => products.length >= maxProducts && e.preventDefault()}
           >
             <Plus className="h-4 w-4" /> নতুন পণ্য
           </Link>
