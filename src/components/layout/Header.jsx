@@ -24,7 +24,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu.jsx";
-import MobileSideMenu from "@/components/layout/MobileSideMenu.jsx";
 import { useAuth } from "@/hooks/useAuth";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useMobileMenu } from "@/context/MobileMenuContext.jsx";
@@ -196,8 +195,6 @@ export default function Header() {
           <Search className="h-[19px] w-[19px]" />
         </Link>
       </div>
-
-      <MobileSideMenu />
     </header>
   );
 }

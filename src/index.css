@@ -65,6 +65,17 @@
   );
 }
 
+/* Horizontal-scroll কার্ড-রো (ক্যাটাগরি চিপস, পণ্য রো, ব্যানার) থেকে
+   স্ক্রলবার লুকিয়ে রাখার জন্য — স্ক্রল কার্যকারিতা ঠিক থাকে, শুধু দৃশ্যমান
+   ট্র্যাক/থাম্ব দেখা যায় না, একটা পরিষ্কার mobile-app-এর মতো লুক দেয় */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .focus-ring {
   @apply outline-none ring-2 ring-offset-2 ring-[hsl(var(--ring))] ring-offset-[hsl(var(--background))];
 }

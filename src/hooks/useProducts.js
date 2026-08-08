@@ -34,6 +34,71 @@ export function useLatestProducts({ limit = 8 } = {}) {
   return { products, loading, error };
 }
 
+// "জনপ্রিয়" সেকশনের জন্য — বিক্রি ও ভিউ-এর ভিত্তিতে সাজানো, কোনো নতুন
+// টেবিল/কলাম ছাড়াই বিদ্যমান sold_count ও view_count ব্যবহার করে
+export function usePopularProducts({ limit = 10 } = {}) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("products")
+        .select(PRODUCT_SELECT)
+        .eq("is_active", true)
+        .order("sold_count", { ascending: false })
+        .order("view_count", { ascending: false })
+        .limit(limit);
+      if (!active) return;
+      if (error) setError(error.message);
+      else setProducts(data ?? []);
+      setLoading(false);
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, [limit]);
+
+  return { products, loading, error };
+}
+
+// "ছাড়" সেকশনের জন্য — যেসব পণ্যে discount সক্রিয় আছে (discount_type != 'none'
+// এবং discount_value > 0), সাম্প্রতিক আগে
+export function useDiscountedProducts({ limit = 10 } = {}) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("products")
+        .select(PRODUCT_SELECT)
+        .eq("is_active", true)
+        .neq("discount_type", "none")
+        .gt("discount_value", 0)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (!active) return;
+      if (error) setError(error.message);
+      else setProducts(data ?? []);
+      setLoading(false);
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, [limit]);
+
+  return { products, loading, error };
+}
+
 export function useProductsByCategory(categorySlug) {
   const [products, setProducts] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
