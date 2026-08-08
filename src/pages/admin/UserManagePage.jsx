@@ -34,7 +34,12 @@ const ROLE_BADGE_CLASS = {
   [ROLES.VISITOR]: "bg-muted text-muted-foreground",
 };
 
-const ROLE_OPTIONS = [ROLES.VISITOR, ROLES.SELLER, ROLES.ADMIN, ROLES.SUPER_ADMIN];
+// সিস্টেমে সবসময় ঠিক ১ জনই Super Admin থাকেন (protected, singleton) — তাই
+// এখান থেকে কাউকে নতুন করে Super Admin বানানোর অপশন রাখা হয়নি (DB লেভেলেও
+// এটি ব্লক করা আছে — দেখুন 0018_super_admin_singleton.sql)। নিজের
+// অ্যাকাউন্ট (অর্থাৎ একমাত্র বিদ্যমান Super Admin) এই প্যানেল থেকে এডিট
+// করা যায় না, তাই এই তালিকায় SUPER_ADMIN থাকারও দরকার নেই।
+const ROLE_OPTIONS = [ROLES.VISITOR, ROLES.SELLER, ROLES.ADMIN];
 
 export default function UserManagePage() {
   const { user: currentUser, role: myRole } = useAuth();

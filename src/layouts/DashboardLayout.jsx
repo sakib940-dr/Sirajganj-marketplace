@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Menu,
   X,
+  KeyRound,
 } from "lucide-react";
 import Sidebar from "@/components/layout/Sidebar.jsx";
 import BottomNav from "@/components/layout/BottomNav.jsx";
@@ -52,7 +53,16 @@ export default function DashboardLayout() {
               মূল সাইটে ফিরুন
             </Link>
           </div>
-          <span className="truncate text-sm font-medium">{profile?.full_name || "সেলার প্যানেল"}</span>
+          <div className="flex items-center gap-3">
+            <span className="truncate text-sm font-medium">{profile?.full_name || "সেলার প্যানেল"}</span>
+            <Link
+              to={ROUTES.ACCOUNT}
+              className="hidden items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground md:flex"
+            >
+              <KeyRound className="h-4 w-4" />
+              পাসওয়ার্ড
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -111,9 +121,17 @@ export default function DashboardLayout() {
               </NavLink>
             ))}
             <Link
-              to={ROUTES.HOME}
+              to={ROUTES.ACCOUNT}
               onClick={() => setDrawerOpen(false)}
               className="mt-2 flex items-center gap-2.5 rounded-lg border-t border-border px-3 pt-4 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <KeyRound className="h-4 w-4" />
+              পাসওয়ার্ড পরিবর্তন
+            </Link>
+            <Link
+              to={ROUTES.HOME}
+              onClick={() => setDrawerOpen(false)}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               মূল সাইটে ফিরুন

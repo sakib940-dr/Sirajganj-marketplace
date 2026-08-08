@@ -114,6 +114,13 @@ export default function AdminLayout() {
               </div>
             </div>
             <Link
+              to={ROUTES.ACCOUNT}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-primary-foreground/75 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            >
+              <KeyRound className="h-4 w-4" />
+              পাসওয়ার্ড পরিবর্তন
+            </Link>
+            <Link
               to={ROUTES.HOME}
               className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-primary-foreground/75 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
             >
@@ -171,6 +178,14 @@ export default function AdminLayout() {
               <AdminSidebarNav groups={groups} onNavigate={() => setDrawerOpen(false)} />
             </div>
             <div className="border-t border-primary-foreground/10 p-3">
+              <Link
+                to={ROUTES.ACCOUNT}
+                onClick={() => setDrawerOpen(false)}
+                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-primary-foreground/75 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              >
+                <KeyRound className="h-4 w-4" />
+                পাসওয়ার্ড পরিবর্তন
+              </Link>
               <Link
                 to={ROUTES.HOME}
                 onClick={() => setDrawerOpen(false)}

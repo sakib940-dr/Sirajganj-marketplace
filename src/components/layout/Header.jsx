@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Store, LayoutDashboard, ShieldCheck, LogIn, Sparkles, Heart } from "lucide-react";
+import { Search, Menu, X, Store, LayoutDashboard, ShieldCheck, LogIn, Sparkles, Heart, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -77,6 +77,12 @@ export default function Header() {
                   {role === ROLES.SELLER ? "সেলার ড্যাশবোর্ড" : "ড্যাশবোর্ড"}
                 </Link>
               </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to={ROUTES.ACCOUNT}>
+                  <KeyRound className="h-4 w-4" />
+                  পাসওয়ার্ড
+                </Link>
+              </Button>
               <Button variant="outline" size="sm" onClick={signOut}>
                 লগ আউট
               </Button>
@@ -140,6 +146,9 @@ export default function Header() {
               )}
               <Link to={ROUTES.DASHBOARD} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
                 {role === ROLES.SELLER ? "সেলার ড্যাশবোর্ড" : "ড্যাশবোর্ড"}
+              </Link>
+              <Link to={ROUTES.ACCOUNT} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
+                পাসওয়ার্ড পরিবর্তন
               </Link>
               <Button variant="outline" size="sm" onClick={signOut}>
                 লগ আউট

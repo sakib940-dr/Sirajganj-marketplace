@@ -17,6 +17,7 @@ import RegisterPage from "@/pages/public/RegisterPage.jsx";
 import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage.jsx";
 import ResetPasswordPage from "@/pages/public/ResetPasswordPage.jsx";
 import SavedItemsPage from "@/pages/public/SavedItemsPage.jsx";
+import AccountPage from "@/pages/public/AccountPage.jsx";
 import NotFoundPage from "@/pages/public/NotFoundPage.jsx";
 
 // Seller
@@ -58,6 +59,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <SavedItemsPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* যেকোনো লগইন করা ইউজার (ভিজিটর/সেলার/অ্যাডমিন) — নিজের পাসওয়ার্ড পরিবর্তন */}
+        <Route
+          path={ROUTES.ACCOUNT}
+          element={
+            <ProtectedRoute>
+              <AccountPage />
             </ProtectedRoute>
           }
         />
