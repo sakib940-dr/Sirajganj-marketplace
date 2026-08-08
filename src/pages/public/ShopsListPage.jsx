@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Search, Store } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ShopCard from "@/components/shared/ShopCard.jsx";
+import ShopGridSkeleton from "@/components/shared/ShopGridSkeleton.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
-import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import { useShops } from "@/hooks/useShops";
 
 // Bottom Navigation-এর "দোকান" ট্যাব থেকে সরাসরি এখানে আসা যায় — সব
@@ -49,7 +49,7 @@ export default function ShopsListPage() {
       </div>
 
       {loading ? (
-        <LoadingSpinner label="দোকান লোড হচ্ছে..." />
+        <ShopGridSkeleton />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Store}

@@ -4,11 +4,11 @@ import { Search, Tag, Store, Package, Flame, BadgePercent, Sparkles } from "luci
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import CategoryChipsRow from "@/components/shared/CategoryChipsRow.jsx";
+import CategoryChipSkeleton from "@/components/shared/CategoryChipSkeleton.jsx";
 import BannerCarousel from "@/components/shared/BannerCarousel.jsx";
-import ShopCard from "@/components/shared/ShopCard.jsx";
+import ShopRow from "@/components/shared/ShopRow.jsx";
 import ProductRow from "@/components/shared/ProductRow.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
-import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import { useCategories } from "@/hooks/useCategories";
 import { useShops } from "@/hooks/useShops";
 import { useLatestProducts, usePopularProducts, useDiscountedProducts } from "@/hooks/useProducts";
@@ -99,7 +99,11 @@ export default function HomePage() {
         </div>
 
         {catLoading ? (
-          <LoadingSpinner label="ক্যাটাগরি লোড হচ্ছে..." />
+          <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <CategoryChipSkeleton key={i} />
+            ))}
+          </div>
         ) : categories.length === 0 ? (
           <EmptyState
             icon={Tag}
@@ -137,35 +141,20 @@ export default function HomePage() {
         emptyDescription="সেলাররা ছাড় দিলে পণ্যগুলো এখানে দেখানো হবে।"
       />
 
-      {/* Featured Shops */}
-      <section id="shops" className="bg-secondary/40 py-12 md:py-16">
-        <div className="container">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold md:text-2xl" style={{ fontFamily: "'Tiro Bangla', serif" }}>
-                জনপ্রিয় দোকানসমূহ
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">নতুন যুক্ত হওয়া বিশ্বস্ত দোকানগুলো দেখুন</p>
-            </div>
-          </div>
-
-          {shopLoading ? (
-            <LoadingSpinner label="দোকান লোড হচ্ছে..." />
-          ) : shops.length === 0 ? (
-            <EmptyState
-              icon={Store}
-              title="এখনো কোনো দোকান অনুমোদিত হয়নি"
-              description="সেলাররা অনুমোদন পেলে তাদের দোকান এখানে প্রদর্শিত হবে।"
-            />
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {shops.map((shop) => (
-                <ShopCard key={shop.id} shop={shop} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      {/* Featured Shops — কম্প্যাক্ট horizontal-scroll রো, প্রোডাক্ট রো-গুলোর সাথে সামঞ্জস্যপূর্ণ */}
+      <ShopRow
+        id="shops"
+        title="জনপ্রিয় দোকানসমূহ"
+        subtitle="নতুন যুক্ত হওয়া বিশ্বস্ত দোকানগুলো দেখুন"
+        icon={Store}
+        accentClassName="bg-secondary text-primary"
+        shops={shops}
+        loading={shopLoading}
+        viewAllTo={ROUTES.SHOPS}
+        emptyIcon={Store}
+        emptyTitle="এখনো কোনো দোকান অনুমোদিত হয়নি"
+        emptyDescription="সেলাররা অনুমোদন পেলে তাদের দোকান এখানে প্রদর্শিত হবে।"
+      />
 
       {/* সাম্প্রতিক পণ্য */}
       <ProductRow

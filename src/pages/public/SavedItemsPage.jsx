@@ -4,8 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import ProductCard from "@/components/shared/ProductCard.jsx";
 import ShopCard from "@/components/shared/ShopCard.jsx";
+import ProductGridSkeleton from "@/components/shared/ProductGridSkeleton.jsx";
+import ShopGridSkeleton from "@/components/shared/ShopGridSkeleton.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
-import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 const PRODUCT_SELECT =
   "*, shops:shop_id ( shop_name, slug, whatsapp_number, facebook_link ), categories:category_id ( name, slug )";
@@ -66,7 +67,7 @@ export default function SavedItemsPage() {
           <Package className="h-4 w-4 text-primary" /> সেভ করা পণ্য
         </h2>
         {loadingProducts ? (
-          <LoadingSpinner label="লোড হচ্ছে..." />
+          <ProductGridSkeleton count={4} />
         ) : savedProducts.length === 0 ? (
           <EmptyState icon={Package} title="এখনো কোনো পণ্য সেভ করা হয়নি" description="পণ্যের পেজে ♥ বাটনে ক্লিক করে সেভ করুন।" />
         ) : (
@@ -83,7 +84,7 @@ export default function SavedItemsPage() {
           <Store className="h-4 w-4 text-primary" /> সেভ করা বিক্রেতা
         </h2>
         {loadingShops ? (
-          <LoadingSpinner label="লোড হচ্ছে..." />
+          <ShopGridSkeleton count={3} />
         ) : savedShops.length === 0 ? (
           <EmptyState icon={Store} title="এখনো কোনো দোকান সেভ করা হয়নি" description="দোকানের পেজে ♥ বাটনে ক্লিক করে সেভ করুন।" />
         ) : (

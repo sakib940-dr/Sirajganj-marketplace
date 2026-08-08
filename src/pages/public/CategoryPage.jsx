@@ -5,8 +5,8 @@ import { useProductsByCategory } from "@/hooks/useProducts";
 import { supabase } from "@/lib/supabaseClient";
 import { categoryPath } from "@/constants/routes";
 import ProductCard from "@/components/shared/ProductCard.jsx";
+import ProductGridSkeleton from "@/components/shared/ProductGridSkeleton.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
-import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -43,7 +43,7 @@ export default function CategoryPage() {
       )}
 
       {loading ? (
-        <LoadingSpinner label="পণ্য লোড হচ্ছে..." />
+        <ProductGridSkeleton />
       ) : products.length === 0 ? (
         <EmptyState
           icon={Package}

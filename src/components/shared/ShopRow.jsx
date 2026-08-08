@@ -1,21 +1,21 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import ProductCard from "@/components/shared/ProductCard.jsx";
-import ProductCardSkeleton from "@/components/shared/ProductCardSkeleton.jsx";
+import ShopCard from "@/components/shared/ShopCard.jsx";
+import ShopCardSkeleton from "@/components/shared/ShopCardSkeleton.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import { cn } from "@/lib/utils";
 
 /**
- * হোমপেজের "জনপ্রিয়", "ছাড়", "সাম্প্রতিক" — এই ধরনের সেকশনগুলোর জন্য
- * একটাই reusable horizontal-scroll কার্ড-রো। এতে হোমপেজ অনেকগুলো সেকশন
- * থাকলেও উল্লম্বভাবে লম্বা হয়ে যায় না — প্রতিটা সেকশন একটামাত্র স্ক্রল-রো।
+ * হোমপেজের "জনপ্রিয় দোকানসমূহ" সেকশন — বড় গ্রিডের বদলে কম্প্যাক্ট
+ * horizontal-scroll রো, ProductRow-এর সাথে ভিজ্যুয়ালি সামঞ্জস্যপূর্ণ।
+ * সব দোকানের সম্পূর্ণ তালিকা এখনো /shops পেজে গ্রিড-আকারেই থাকছে।
  */
-export default function ProductRow({
+export default function ShopRow({
   id,
   title,
   subtitle,
   icon: Icon,
-  products,
+  shops,
   loading,
   viewAllTo,
   emptyIcon,
@@ -24,14 +24,14 @@ export default function ProductRow({
   accentClassName,
 }) {
   return (
-    <section id={id} className="py-8 md:py-10">
+    <section id={id} className="bg-secondary/40 py-8 md:py-10">
       <div className="container">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {Icon && (
               <span
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-primary",
+                  "flex h-8 w-8 items-center justify-center rounded-lg bg-card text-primary",
                   accentClassName
                 )}
               >
@@ -46,7 +46,7 @@ export default function ProductRow({
             </div>
           </div>
 
-          {viewAllTo && products?.length > 0 && (
+          {viewAllTo && shops?.length > 0 && (
             <Link
               to={viewAllTo}
               className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary md:text-sm"
@@ -55,33 +55,27 @@ export default function ProductRow({
             </Link>
           )}
         </div>
-      </div>
 
-      {loading ? (
-        <div className="container">
+        {loading ? (
           <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <ProductCardSkeleton key={i} className="w-[8.5rem] shrink-0 sm:w-40 md:w-44" />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <ShopCardSkeleton key={i} className="w-56 shrink-0 sm:w-64" />
             ))}
           </div>
-        </div>
-      ) : !products || products.length === 0 ? (
-        <div className="container">
+        ) : !shops || shops.length === 0 ? (
           <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDescription} />
-        </div>
-      ) : (
-        <div className="container">
+        ) : (
           <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                className="w-[8.5rem] shrink-0 snap-start sm:w-40 md:w-44"
+            {shops.map((shop) => (
+              <ShopCard
+                key={shop.id}
+                shop={shop}
+                className="w-56 shrink-0 snap-start sm:w-64"
               />
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }

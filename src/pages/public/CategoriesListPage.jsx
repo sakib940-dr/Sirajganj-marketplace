@@ -1,7 +1,7 @@
 import { Tag } from "lucide-react";
 import CategoryCard from "@/components/shared/CategoryCard.jsx";
+import CategoryCardSkeleton from "@/components/shared/CategoryCardSkeleton.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
-import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import { useCategories } from "@/hooks/useCategories";
 
 // Bottom Navigation-এর "ক্যাটাগরি" ট্যাব থেকে সরাসরি এখানে আসা যায় — সব
@@ -24,7 +24,11 @@ export default function CategoriesListPage() {
       </div>
 
       {loading ? (
-        <LoadingSpinner label="ক্যাটাগরি লোড হচ্ছে..." />
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <CategoryCardSkeleton key={i} />
+          ))}
+        </div>
       ) : categories.length === 0 ? (
         <EmptyState
           icon={Tag}

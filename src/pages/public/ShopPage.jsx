@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import ProductCard from "@/components/shared/ProductCard.jsx";
+import ProductGridSkeleton from "@/components/shared/ProductGridSkeleton.jsx";
 import ShareShopButton from "@/components/shared/ShareShopButton.jsx";
 import { useShopSave } from "@/hooks/useProductAnalytics";
 
@@ -14,6 +15,7 @@ export default function ShopPage() {
   const navigate = useNavigate();
   const { shop, loading, error } = useShopBySlug(shopSlug);
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [gallery, setGallery] = useState([]);
   const { isSaved, saving, toggleSave } = useShopSave(shop?.id);
 
@@ -24,13 +26,17 @@ export default function ShopPage() {
 
   useEffect(() => {
     if (!shop?.id) return;
+    setProductsLoading(true);
     supabase
       .from("products")
       .select("*")
       .eq("shop_id", shop.id)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
-      .then(({ data }) => setProducts(data ?? []));
+      .then(({ data }) => {
+        setProducts(data ?? []);
+        setProductsLoading(false);
+      });
 
     supabase
       .from("shop_gallery")
@@ -140,7 +146,9 @@ export default function ShopPage() {
 
           <div className="md:col-span-2">
             <h3 className="mb-3 font-semibold">পণ্যসমূহ</h3>
-            {products.length === 0 ? (
+            {productsLoading ? (
+              <ProductGridSkeleton count={6} className="sm:grid-cols-3 md:grid-cols-3" />
+            ) : products.length === 0 ? (
               <EmptyState icon={Package} title="এই দোকানে এখনো কোনো পণ্য যোগ করা হয়নি" />
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">

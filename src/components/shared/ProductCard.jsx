@@ -16,7 +16,7 @@ export default function ProductCard({ product, className }) {
     <Link
       to={productPath(product.slug)}
       className={cn(
-        "group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md",
+        "group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]",
         className
       )}
     >

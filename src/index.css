@@ -76,6 +76,34 @@
   display: none;
 }
 
+/* Skeleton shimmer — লোডিং অবস্থায় স্পিনারের বদলে হালকা shimmer placeholder।
+   ::after pseudo-element-এ শুধু transform অ্যানিমেট করা হয় (background-position
+   নয়) যাতে GPU-composited থাকে এবং low-end ডিভাইসেও ভারী না লাগে — কোনো JS
+   ছাড়াই বিশুদ্ধ CSS অ্যানিমেশন। */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: hsl(var(--secondary));
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(90deg, transparent, hsl(var(--card) / 0.7), transparent);
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}
+
 .focus-ring {
   @apply outline-none ring-2 ring-offset-2 ring-[hsl(var(--ring))] ring-offset-[hsl(var(--background))];
 }

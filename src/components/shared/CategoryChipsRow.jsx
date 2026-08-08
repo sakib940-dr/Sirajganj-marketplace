@@ -22,7 +22,7 @@ export default function CategoryChipsRow({ categories, twoRow = false }) {
           <Link
             key={cat.id}
             to={categoryPath(cat.slug)}
-            className="group flex w-16 shrink-0 flex-col items-center gap-1.5 text-center sm:w-[4.75rem]"
+            className="group flex w-16 shrink-0 flex-col items-center gap-1.5 text-center transition-transform active:scale-[0.95] sm:w-[4.75rem]"
           >
             <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-secondary text-primary shadow-sm transition-all group-hover:-translate-y-0.5 group-hover:border-accent group-hover:shadow-md sm:h-16 sm:w-16">
               {cat.icon_url ? (

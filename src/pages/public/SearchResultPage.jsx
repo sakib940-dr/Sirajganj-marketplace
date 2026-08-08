@@ -2,8 +2,8 @@ import { useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useProductSearch } from "@/hooks/useProducts";
 import ProductCard from "@/components/shared/ProductCard.jsx";
+import ProductGridSkeleton from "@/components/shared/ProductGridSkeleton.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
-import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 
 export default function SearchResultPage() {
   const [searchParams] = useSearchParams();
@@ -20,7 +20,7 @@ export default function SearchResultPage() {
       </p>
 
       {loading ? (
-        <LoadingSpinner label="খোঁজা হচ্ছে..." />
+        <ProductGridSkeleton />
       ) : products.length === 0 ? (
         <EmptyState
           icon={Search}

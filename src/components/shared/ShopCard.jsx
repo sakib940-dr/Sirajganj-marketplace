@@ -1,36 +1,53 @@
 import { Link } from "react-router-dom";
-import { Store, MapPin } from "lucide-react";
+import { Store, MapPin, MessageCircle } from "lucide-react";
 import { shopPath } from "@/constants/routes";
+import { cn } from "@/lib/utils";
 
-export default function ShopCard({ shop }) {
+/**
+ * কম্প্যাক্ট শপ কার্ড — ব্যানার আর লোগোর অনুপাত ভারসাম্যপূর্ণ রাখা হয়েছে
+ * (ব্যানার ছোট, লোগো তুলনামূলক বড় ও ওভারল্যাপ করে বসানো) যাতে লোগো-ই
+ * দোকান চেনার প্রধান ভিজ্যুয়াল অ্যাঙ্কর হয়ে থাকে। গ্রিড ও horizontal-scroll
+ * রো (ShopRow) — দুই জায়গাতেই `className`-এ width দিয়ে ব্যবহারযোগ্য।
+ */
+export default function ShopCard({ shop, className }) {
   return (
     <Link
       to={shopPath(shop.slug)}
-      className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md"
+      className={cn(
+        "group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]",
+        className
+      )}
     >
-      <div className="h-24 w-full bg-secondary">
-        {shop.banner_url && (
-          <img src={shop.banner_url} alt="" className="h-full w-full object-cover" />
+      <div className="h-16 w-full bg-secondary sm:h-20">
+        {shop.banner_url ? (
+          <img src={shop.banner_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-primary/15 to-accent/15" />
         )}
       </div>
-      <div className="flex items-start gap-3 p-4">
-        <div className="-mt-8 flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-primary text-primary-foreground shadow-sm">
+      <div className="flex items-center gap-3 p-3 pt-0">
+        <div className="-mt-6 flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-primary text-primary-foreground shadow-sm">
           {shop.logo_url ? (
-            <img src={shop.logo_url} alt={shop.shop_name} className="h-full w-full object-cover" />
+            <img src={shop.logo_url} alt={shop.shop_name} className="h-full w-full object-cover" loading="lazy" />
           ) : (
-            <Store className="h-6 w-6" />
+            <Store className="h-5 w-5" />
           )}
         </div>
-        <div className="min-w-0 pt-0.5">
-          <h3 className="truncate font-semibold text-foreground group-hover:text-primary">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-semibold text-foreground group-hover:text-primary">
             {shop.shop_name}
           </h3>
-          {shop.address && (
+          {shop.address ? (
             <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
               <MapPin className="h-3 w-3 shrink-0" />
               {shop.address}
             </p>
-          )}
+          ) : shop.whatsapp_number ? (
+            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+              <MessageCircle className="h-3 w-3 shrink-0" />
+              সরাসরি যোগাযোগ করা যাবে
+            </p>
+          ) : null}
         </div>
       </div>
     </Link>
