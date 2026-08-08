@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { getSearchSynonyms, expandSearchTerms } from "@/lib/searchSynonyms";
 
 const PRODUCT_SELECT =
-  "*, shops:shop_id ( shop_name, slug, whatsapp_number ), categories:category_id ( name, slug )";
+  "*, shops:shop_id ( shop_name, slug, whatsapp_number, facebook_link ), categories:category_id ( name, slug )";
 
 export function useLatestProducts({ limit = 8 } = {}) {
   const [products, setProducts] = useState([]);
@@ -137,28 +138,82 @@ export function useProductBySlug(slug) {
   return { product, images, loading, error };
 }
 
+// PostgREST .or() ফিল্টার স্ট্রিং-এ ভাঙার মতো ক্যারেক্টার সরানো হয়
+function sanitizeForOrFilter(term) {
+  return term.replace(/[,()%*]/g, "").trim();
+}
+
+/**
+ * বাংলা-ইংরেজি উভয় ভাষাতেই সার্চ কাজ করে — ইংরেজি লিখলেও বাংলা নামের পণ্য
+ * পাওয়া যাবে (এবং উল্টোটাও), search_synonyms ডিকশনারির মাধ্যমে। পণ্যের নাম,
+ * বিবরণ এবং ক্যাটাগরির নাম — তিনটাতেই মিলিয়ে দেখা হয়।
+ */
 export function useProductSearch(query) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!query) {
+    if (!query || !query.trim()) {
       setProducts([]);
       return;
     }
     let active = true;
     async function load() {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("products")
-        .select(PRODUCT_SELECT)
-        .eq("is_active", true)
-        .ilike("name", `%${query}%`)
-        .order("created_at", { ascending: false });
+      setError(null);
+
+      const synonyms = await getSearchSynonyms();
+      const terms = expandSearchTerms(query, synonyms)
+        .map(sanitizeForOrFilter)
+        .filter(Boolean);
+
+      if (terms.length === 0) {
+        if (active) {
+          setProducts([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const textFilter = terms
+        .map((t) => `name.ilike.%${t}%,description.ilike.%${t}%`)
+        .join(",");
+      const categoryFilter = terms.map((t) => `name.ilike.%${t}%`).join(",");
+
+      const [textResult, categoryResult] = await Promise.all([
+        supabase.from("products").select(PRODUCT_SELECT).eq("is_active", true).or(textFilter),
+        supabase.from("categories").select("id").or(categoryFilter),
+      ]);
+
       if (!active) return;
-      if (error) setError(error.message);
-      else setProducts(data ?? []);
+
+      if (textResult.error) {
+        setError(textResult.error.message);
+        setLoading(false);
+        return;
+      }
+
+      let categoryMatches = [];
+      const categoryIds = (categoryResult.data ?? []).map((c) => c.id);
+      if (categoryIds.length > 0) {
+        const { data } = await supabase
+          .from("products")
+          .select(PRODUCT_SELECT)
+          .eq("is_active", true)
+          .in("category_id", categoryIds);
+        categoryMatches = data ?? [];
+      }
+
+      if (!active) return;
+
+      const merged = new Map();
+      [...(textResult.data ?? []), ...categoryMatches].forEach((p) => merged.set(p.id, p));
+      const results = Array.from(merged.values()).sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      setProducts(results);
       setLoading(false);
     }
     load();
@@ -168,4 +223,38 @@ export function useProductSearch(query) {
   }, [query]);
 
   return { products, loading, error };
+}
+
+// একই ক্যাটাগরির অন্যান্য পণ্য (বর্তমান পণ্যটি বাদে) — "সম্পর্কিত পণ্য" সেকশনের জন্য
+export function useRelatedProducts(categoryId, excludeProductId, { limit = 8 } = {}) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!categoryId) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+    supabase
+      .from("products")
+      .select(PRODUCT_SELECT)
+      .eq("category_id", categoryId)
+      .eq("is_active", true)
+      .neq("id", excludeProductId ?? "00000000-0000-0000-0000-000000000000")
+      .order("created_at", { ascending: false })
+      .limit(limit)
+      .then(({ data, error }) => {
+        if (!active) return;
+        setProducts(error ? [] : data ?? []);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [categoryId, excludeProductId, limit]);
+
+  return { products, loading };
 }

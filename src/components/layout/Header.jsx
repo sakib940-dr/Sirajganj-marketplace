@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Store, LayoutDashboard, ShieldCheck, LogIn, Sparkles } from "lucide-react";
+import { Search, Menu, X, Store, LayoutDashboard, ShieldCheck, LogIn, Sparkles, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,6 +49,12 @@ export default function Header() {
         <div className="ml-auto hidden items-center gap-2 md:flex">
           {isLoggedIn ? (
             <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to={ROUTES.SAVED}>
+                  <Heart className="h-4 w-4" />
+                  সংরক্ষিত
+                </Link>
+              </Button>
               {isAdminOrAbove(role) && (
                 <Button variant="ghost" size="sm" asChild>
                   <Link to={ROUTES.ADMIN}>
@@ -116,6 +122,9 @@ export default function Header() {
           </form>
           {isLoggedIn ? (
             <>
+              <Link to={ROUTES.SAVED} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
+                সংরক্ষিত
+              </Link>
               {isAdminOrAbove(role) && (
                 <Link to={ROUTES.ADMIN} className="text-sm font-medium" onClick={() => setMobileOpen(false)}>
                   অ্যাডমিন প্যানেল

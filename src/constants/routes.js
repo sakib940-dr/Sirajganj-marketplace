@@ -8,6 +8,7 @@ export const ROUTES = {
   REGISTER: "/register",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
+  SAVED: "/saved",
 
   DASHBOARD: "/dashboard",
   DASHBOARD_SHOP: "/dashboard/shop",

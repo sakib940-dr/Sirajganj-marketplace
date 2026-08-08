@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import ImageUploader from "@/components/shared/ImageUploader.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
+import ShareShopButton from "@/components/shared/ShareShopButton.jsx";
 
 const EMPTY_SHOP = {
   shop_name: "",
@@ -117,15 +118,18 @@ export default function ShopSettingsPage() {
       </div>
 
       {shopId && (
-        <div className="flex items-center justify-between rounded-xl border border-primary/30 bg-secondary/60 p-4 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/30 bg-secondary/60 p-4 text-sm">
           <span>
             আপনার দোকানের লিংক: <span className="font-medium text-primary">/shop/{shop.slug}</span>
           </span>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={shopPath(shop.slug)} target="_blank">
-              দেখুন <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ShareShopButton shop={shop} variant="ghost" />
+            <Button variant="ghost" size="sm" asChild>
+              <Link to={shopPath(shop.slug)} target="_blank">
+                দেখুন <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
         </div>
       )}
 

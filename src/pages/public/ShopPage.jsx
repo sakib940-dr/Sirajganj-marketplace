@@ -1,17 +1,26 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Phone, MapPin, Facebook, Map, MessageCircle, Store, Package } from "lucide-react";
+import { Phone, MapPin, Facebook, Map, MessageCircle, Store, Package, Heart } from "lucide-react";
 import { useShopBySlug } from "@/hooks/useShops";
 import { supabase } from "@/lib/supabaseClient";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import ProductCard from "@/components/shared/ProductCard.jsx";
+import ShareShopButton from "@/components/shared/ShareShopButton.jsx";
+import { useShopSave } from "@/hooks/useProductAnalytics";
 
 export default function ShopPage() {
   const { shopSlug } = useParams();
+  const navigate = useNavigate();
   const { shop, loading, error } = useShopBySlug(shopSlug);
   const [products, setProducts] = useState([]);
   const [gallery, setGallery] = useState([]);
+  const { isSaved, saving, toggleSave } = useShopSave(shop?.id);
+
+  const handleSaveClick = async () => {
+    const { requiresLogin } = await toggleSave();
+    if (requiresLogin) navigate("/login");
+  };
 
   useEffect(() => {
     if (!shop?.id) return;
@@ -66,6 +75,22 @@ export default function ShopPage() {
             </h1>
             {shop.about && <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{shop.about}</p>}
           </div>
+          <button
+            type="button"
+            onClick={handleSaveClick}
+            disabled={saving}
+            aria-pressed={isSaved}
+            className={`inline-flex shrink-0 items-center gap-2 self-start rounded-lg border px-4 py-2 text-sm font-medium transition-colors md:self-center ${
+              isSaved
+                ? "border-destructive bg-destructive/10 text-destructive"
+                : "border-border bg-card text-muted-foreground hover:text-destructive"
+            }`}
+            title={isSaved ? "সেভ করা তালিকা থেকে সরান" : "দোকানটি সেভ করুন"}
+          >
+            <Heart className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+            {isSaved ? "সেভ করা হয়েছে" : "দোকান সেভ করুন"}
+          </button>
+          <ShareShopButton shop={shop} className="self-start md:self-center" />
         </div>
 
         <div className="mt-6 grid gap-6 md:grid-cols-3">

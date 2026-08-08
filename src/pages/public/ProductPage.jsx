@@ -1,21 +1,43 @@
-import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Package, Store, MessageCircle } from "lucide-react";
-import { useProductBySlug } from "@/hooks/useProducts";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Package, Store, Heart } from "lucide-react";
+import { useProductBySlug, useRelatedProducts } from "@/hooks/useProducts";
 import { formatPriceBn, getDiscountedPrice } from "@/lib/utils";
 import { shopPath } from "@/constants/routes";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
+import ProductCard from "@/components/shared/ProductCard.jsx";
+import CurrentViewersBadge from "@/components/shared/CurrentViewersBadge.jsx";
+import OrderNowMenu from "@/components/shared/OrderNowMenu.jsx";
+import { trackProductView, trackProductOrderClick, useProductSave } from "@/hooks/useProductAnalytics";
 
 const AUTO_SLIDE_INTERVAL_MS = 4000;
 
 export default function ProductPage() {
   const { productSlug } = useParams();
+  const navigate = useNavigate();
   const { product, images, loading, error } = useProductBySlug(productSlug);
   const allImages = product
     ? [product.thumbnail_url, ...images.map((i) => i.image_url)].filter(Boolean)
     : [];
   const [activeImage, setActiveImage] = useState(0);
+  const { isSaved, saving, toggleSave } = useProductSave(product?.id);
+  const { products: relatedProducts } = useRelatedProducts(product?.category_id, product?.id);
+  const viewedProductIds = useRef(new Set());
+
+  // পণ্যের পেজ লোড হলে একবার ভিউ কাউন্ট বাড়ানো হয় (একই পণ্যের জন্য বারবার নয়)
+  useEffect(() => {
+    if (!product?.id || viewedProductIds.current.has(product.id)) return;
+    viewedProductIds.current.add(product.id);
+    trackProductView(product.id);
+  }, [product?.id]);
+
+  const handleSaveClick = async () => {
+    const { requiresLogin } = await toggleSave();
+    if (requiresLogin) {
+      navigate("/login");
+    }
+  };
 
   // একাধিক ছবি থাকলে স্বয়ংক্রিয় ইমেজ স্লাইডার (কয়েক সেকেন্ড পরপর পরবর্তী ছবি দেখাবে)
   useEffect(() => {
@@ -81,6 +103,9 @@ export default function ProductPage() {
           <h1 className="mt-3 text-2xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
             {product.name}
           </h1>
+          <div className="mt-2">
+            <CurrentViewersBadge productId={product.id} />
+          </div>
           {hasDiscount ? (
             <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
               <p className="text-3xl font-bold text-primary">{formatPriceBn(finalPrice)}</p>
@@ -93,19 +118,34 @@ export default function ProductPage() {
             <p className="mt-3 text-3xl font-bold text-primary">{formatPriceBn(product.price)}</p>
           )}
 
-          {product.shops?.whatsapp_number && (
-            <a
-              href={`https://wa.me/${product.shops.whatsapp_number.replace(/\D/g, "")}?text=${encodeURIComponent(
-                `আমি "${product.name}" পণ্যটি (মূল্য: ${formatPriceBn(finalPrice)}) কিনতে আগ্রহী। এই লিংক থেকে দেখেছি: ${window.location.href}`
-              )}`}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-            >
-              <MessageCircle className="h-5 w-5" />
-              হোয়াটসঅ্যাপে কিনুন
-            </a>
-          )}
+          {(() => {
+            const shop = product.shops;
+            const whatsappMessage = `আমি "${product.name}" পণ্যটি (মূল্য: ${formatPriceBn(finalPrice)}) কিনতে আগ্রহী। এই লিংক থেকে দেখেছি: ${window.location.href}`;
+
+            return (
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <OrderNowMenu
+                  shop={shop}
+                  whatsappMessage={whatsappMessage}
+                  onOrderClick={() => trackProductOrderClick(product.id)}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={saving}
+                  aria-pressed={isSaved}
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border transition-colors ${
+                    isSaved
+                      ? "border-destructive bg-destructive/10 text-destructive"
+                      : "border-border bg-card text-muted-foreground hover:text-destructive"
+                  }`}
+                  title={isSaved ? "সেভ করা তালিকা থেকে সরান" : "পণ্যটি সেভ করুন"}
+                >
+                  <Heart className={`h-5 w-5 ${isSaved ? "fill-current" : ""}`} />
+                </button>
+              </div>
+            );
+          })()}
 
           {product.description && (
             <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
@@ -129,6 +169,19 @@ export default function ProductPage() {
           )}
         </div>
       </div>
+
+      {relatedProducts.length > 0 && (
+        <div className="mt-14">
+          <h2 className="mb-4 text-lg font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
+            সম্পর্কিত পণ্য
+          </h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {relatedProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
