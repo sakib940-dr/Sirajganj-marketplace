@@ -1,14 +1,52 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import {
+  Package,
+  CheckCircle2,
+  PackageX,
+  Eye,
+  Heart,
+  MousePointerClick,
+  ArrowUpRight,
+  Store,
+  TrendingUp,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useSellerProductStats } from "@/hooks/useSellerProductStats";
 import PendingApprovalNotice from "@/components/seller/PendingApprovalNotice.jsx";
+import StatCard from "@/components/shared/StatCard.jsx";
+import BarStatChart from "@/components/shared/charts/BarStatChart.jsx";
+import DonutStatChart from "@/components/shared/charts/DonutStatChart.jsx";
 import { ROUTES } from "@/constants/routes";
 import { ROLES, SELLER_STATUS, isAdminOrAbove } from "@/constants/roles";
 
 export default function DashboardHome() {
-  const { role, sellerStatus, profile } = useAuth();
+  const { user, role, sellerStatus, profile } = useAuth();
 
   const isApprovedSeller =
     isAdminOrAbove(role) || (role === ROLES.SELLER && sellerStatus === SELLER_STATUS.APPROVED);
+
+  const { products, stats, mostViewed, loading } = useSellerProductStats({
+    user,
+    enabled: isApprovedSeller && !!user,
+  });
+
+  const topProductsChartData = useMemo(
+    () =>
+      mostViewed.map((p) => ({
+        label: p.name,
+        value: p.view_count ?? 0,
+      })),
+    [mostViewed]
+  );
+
+  const statusChartData = useMemo(
+    () => [
+      { label: "সক্রিয় পণ্য", value: stats.activeProducts },
+      { label: "নিষ্ক্রিয় পণ্য", value: stats.inactiveProducts, color: "hsl(var(--muted-foreground))" },
+    ],
+    [stats.activeProducts, stats.inactiveProducts]
+  );
 
   if (!isApprovedSeller) {
     return <PendingApprovalNotice status={sellerStatus} />;
@@ -16,17 +54,106 @@ export default function DashboardHome() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-6">
-        <h1 className="text-xl font-bold" style={{ fontFamily: "'Tiro Bangla', serif" }}>
+      {/* ================= স্বাগতম ব্যানার ================= */}
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-6">
+        <h1
+          className="text-lg font-bold sm:text-xl"
+          style={{ fontFamily: "'Tiro Bangla', serif" }}
+        >
           স্বাগতম, {profile?.full_name || "সেলার"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">আপনার দোকান এখান থেকে পরিচালনা করুন</p>
       </div>
 
-      <div className="rounded-xl border border-accent/40 bg-accent/10 p-4 text-sm">
-        আপনার দোকানের তথ্য পূরণ বা হালনাগাদ করতে চান?{" "}
-        <Link to={ROUTES.DASHBOARD_SHOP} className="font-medium text-primary hover:underline">
+      {/* ================= সামারি কার্ড: এক নজরে সবকিছু ================= */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-muted-foreground sm:text-base">
+            আপনার দোকানের সারসংক্ষেপ
+          </h2>
+          <Link
+            to={ROUTES.DASHBOARD_ANALYTICS}
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline sm:text-sm"
+          >
+            পূর্ণ অ্যানালিটিক্স
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+          <StatCard title="মোট পণ্য" icon={Package} value={stats.totalProducts} loading={loading} />
+          <StatCard
+            title="সক্রিয় পণ্য"
+            icon={CheckCircle2}
+            value={stats.activeProducts}
+            loading={loading}
+          />
+          <StatCard
+            title="স্টক শেষ"
+            icon={PackageX}
+            value={stats.outOfStockProducts}
+            loading={loading}
+            variant={stats.outOfStockProducts > 0 ? "destructive" : "primary"}
+          />
+          <StatCard
+            title="মোট ভিউ"
+            icon={Eye}
+            value={stats.views}
+            loading={loading}
+            variant="accent"
+          />
+          <StatCard
+            title="মোট সেভ"
+            icon={Heart}
+            value={stats.saves}
+            loading={loading}
+            variant="accent"
+          />
+          <StatCard
+            title="অর্ডার ক্লিক"
+            icon={MousePointerClick}
+            value={stats.clicks}
+            loading={loading}
+            variant="accent"
+          />
+        </div>
+      </div>
+
+      {/* ================= চার্ট: এক নজরে ভিজ্যুয়াল ওভারভিউ ================= */}
+      {(loading || products.length > 0) && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <BarStatChart
+            title="সর্বাধিক দেখা পণ্য"
+            icon={TrendingUp}
+            description="ভিউ অনুযায়ী টপ ৫ পণ্য"
+            loading={loading}
+            emptyLabel="এখনো কোনো ভিউ নেই"
+            data={topProductsChartData}
+            valueLabel="ভিউ"
+          />
+          <DonutStatChart
+            title="পণ্যের অবস্থা"
+            icon={Package}
+            description="সক্রিয় বনাম নিষ্ক্রিয় পণ্য"
+            loading={loading}
+            emptyLabel="এখনো কোনো পণ্য নেই"
+            data={statusChartData}
+            centerLabel="মোট পণ্য"
+          />
+        </div>
+      )}
+
+      {/* ================= শপ সেটআপ CTA ================= */}
+      <div className="flex flex-col gap-3 rounded-xl border border-accent/40 bg-accent/10 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+        <span className="flex items-center gap-2">
+          <Store className="h-4 w-4 shrink-0 text-accent" />
+          আপনার দোকানের তথ্য পূরণ বা হালনাগাদ করতে চান?
+        </span>
+        <Link
+          to={ROUTES.DASHBOARD_SHOP}
+          className="inline-flex shrink-0 items-center gap-1 font-medium text-primary hover:underline"
+        >
           এখনই দেখুন
+          <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>

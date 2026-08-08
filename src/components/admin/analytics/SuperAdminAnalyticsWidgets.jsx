@@ -1,21 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import StatCard from "@/components/shared/StatCard.jsx";
 
-// ছোট সামারি সংখ্যার কার্ড (Total Users, Total Products ইত্যাদি)
-export function StatCard({ title, icon: Icon, value, loading }) {
-  return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-md">
-      <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" />
-        </span>
-      </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-bold tabular-nums">{loading ? "..." : value}</p>
-      </CardContent>
-    </Card>
-  );
-}
+// ছোট সামারি সংখ্যার কার্ড (Total Users, Total Products ইত্যাদি) — এখন
+// শেয়ার্ড StatCard ব্যবহার করে, যাতে সেলার/অ্যাডমিন/সুপার অ্যাডমিন সব
+// ড্যাশবোর্ডে একই ডিজাইন বজায় থাকে
+export { StatCard };
 
 /**
  * সাধারণ র‍্যাংকড লিস্ট কার্ড — Top Sellers / Top Viewed Products /
