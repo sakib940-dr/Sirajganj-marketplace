@@ -12,6 +12,10 @@ import {
   BadgeCheck,
   Loader2,
   UserCircle2,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Copy,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,6 +56,8 @@ export default function UserManagePage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [savedPassword, setSavedPassword] = useState(null); // admin_saved_credentials row
+  const [pwRevealed, setPwRevealed] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,9 +74,11 @@ export default function UserManagePage() {
     setSelected(profile);
     setActionError("");
     setDetail(null);
+    setSavedPassword(null);
+    setPwRevealed(false);
     setDetailLoading(true);
 
-    const [{ data: verifications }, { data: shop }] = await Promise.all([
+    const queries = [
       supabase
         .from("seller_verifications")
         .select("*")
@@ -78,9 +86,20 @@ export default function UserManagePage() {
         .order("created_at", { ascending: false })
         .limit(1),
       supabase.from("shops").select("*").eq("owner_id", profile.id).maybeSingle(),
-    ]);
+    ];
+    // পাসওয়ার্ড ভল্ট শুধুমাত্র Super Admin পড়তে পারবেন (RLS দ্বারা সুরক্ষিত)
+    if (isSuperAdmin) {
+      queries.push(
+        supabase.from("admin_saved_credentials").select("*").eq("user_id", profile.id).maybeSingle()
+      );
+    }
+    const results = await Promise.all(queries);
+    const [{ data: verifications }, { data: shop }] = results;
     const verification = verifications?.[0] ?? null;
 
+    if (isSuperAdmin) {
+      setSavedPassword(results[2]?.data ?? null);
+    }
     setDetail({ verification: verification ?? null, shop: shop ?? null });
     setDetailLoading(false);
   };
@@ -308,6 +327,42 @@ export default function UserManagePage() {
                   label="অ্যাকাউন্ট অবস্থা"
                   value={ACCOUNT_STATUS_LABEL_BN[selected.account_status] || ACCOUNT_STATUS_LABEL_BN[ACCOUNT_STATUS.ACTIVE]}
                 />
+
+                {isSuperAdmin && (
+                  <div className="flex items-start gap-2">
+                    <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">সংরক্ষিত পাসওয়ার্ড</p>
+                      {savedPassword?.password ? (
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <span className="rounded bg-secondary px-2 py-1 font-mono text-xs">
+                            {pwRevealed ? savedPassword.password : "••••••••"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setPwRevealed((v) => !v)}
+                            className="rounded p-1 text-muted-foreground hover:bg-secondary"
+                            title={pwRevealed ? "লুকান" : "দেখুন"}
+                          >
+                            {pwRevealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigator.clipboard.writeText(savedPassword.password)}
+                            className="rounded p-1 text-muted-foreground hover:bg-secondary"
+                            title="কপি করুন"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">
+                          সংরক্ষিত নেই (ইউজার এখনো নিজে সাইনআপ/পাসওয়ার্ড পরিবর্তন করেননি, অথবা রিসেট করা হয়নি)
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {detail?.shop && (
                   <div className="rounded-lg border border-border p-3">

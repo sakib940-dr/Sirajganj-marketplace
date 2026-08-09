@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
+import { saveCredentialToVault } from "@/lib/credentialVault";
 import { ROUTES } from "@/constants/routes";
 
 export default function RegisterPage() {
@@ -30,6 +31,13 @@ export default function RegisterPage() {
       setError(signUpError.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে।");
       setSubmitting(false);
       return;
+    }
+
+    // Super Admin Panel-এ (ইউজার রোলসহ পেজে) পরে দেখার জন্য এই পাসওয়ার্ড
+    // ভল্টে সংরক্ষণ করা হচ্ছে — SMS/paid reset provider এখনো যোগ করা হয়নি
+    // বলে এটি সাময়িক ব্যবস্থা (owner-এর সুস্পষ্ট অনুরোধে)।
+    if (data?.user) {
+      await saveCredentialToVault(data.user.id, password);
     }
 
     // যদি ভিজিটর সেলার হতে চায়, নিরাপদ RPC কল করে request পাঠানো হয়

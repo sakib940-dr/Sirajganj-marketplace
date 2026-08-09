@@ -4,17 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { saveCredentialToVault } from "@/lib/credentialVault";
 
 /**
  * সবার জন্য (ভিজিটর/সেলার/অ্যাডমিন — যার যার permission অনুযায়ী) নিজের
  * লগইন পাসওয়ার্ড পরিবর্তনের ফর্ম। এটি একই বিদ্যমান নিরাপদ auth flow ব্যবহার
  * করে যা ResetPasswordPage-এ ব্যবহৃত হয় (supabase.auth.updateUser — শুধু
  * সচল সেশনের জন্যই কাজ করে, তাই এই ইউজারের নিজের পাসওয়ার্ড ছাড়া অন্য কারো
- * পাসওয়ার্ড এর মাধ্যমে বদলানো সম্ভব না)। কোনো পাসওয়ার্ড কোথাও প্রদর্শন বা
- * সংরক্ষণ করা হয় না।
+ * পাসওয়ার্ড এর মাধ্যমে বদলানো সম্ভব না)।
+ *
+ * NOTE: পরিবর্তনের পর নতুন পাসওয়ার্ড Super Admin ভল্টেও (admin_saved_credentials)
+ * সংরক্ষণ করা হয় (owner-এর সুস্পষ্ট অনুরোধে — SMS/paid provider এখনো নেই),
+ * যাতে Super Admin পরবর্তীতে "ইউজার (রোলসহ)" পেজ থেকে দেখতে পারেন।
  */
 export default function ChangePasswordForm() {
-  const { updatePassword } = useAuth();
+  const { updatePassword, user } = useAuth();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +46,10 @@ export default function ChangePasswordForm() {
     if (updateError) {
       setError("পাসওয়ার্ড আপডেট ব্যর্থ হয়েছে: " + updateError.message);
       return;
+    }
+
+    if (user?.id) {
+      await saveCredentialToVault(user.id, password);
     }
 
     setPassword("");

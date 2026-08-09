@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
+import { saveCredentialToVault } from "@/lib/credentialVault";
 import { ROUTES } from "@/constants/routes";
 
 export default function ResetPasswordPage() {
@@ -47,6 +48,11 @@ export default function ResetPasswordPage() {
     if (error) {
       setError("পাসওয়ার্ড আপডেট ব্যর্থ হয়েছে: " + error.message);
       return;
+    }
+    const { data: sessionData } = await supabase.auth.getSession();
+    const uid = sessionData?.session?.user?.id;
+    if (uid) {
+      await saveCredentialToVault(uid, password);
     }
     setDone(true);
     setTimeout(() => navigate(ROUTES.HOME), 2000);
