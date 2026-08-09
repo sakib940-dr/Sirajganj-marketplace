@@ -130,81 +130,156 @@ export default function ProductListPage() {
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-secondary/50 text-left">
-              <tr>
-                <th className="p-3 font-medium">পণ্য</th>
-                <th className="p-3 font-medium">মূল্য</th>
-                <th className="p-3 font-medium">স্টক / বিক্রি</th>
-                <th className="p-3 font-medium">অবস্থা</th>
-                <th className="p-3 font-medium">অ্যাকশন</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="flex items-center gap-3 p-3">
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-secondary">
-                      {p.thumbnail_url && (
-                        <img src={p.thumbnail_url} alt="" className="h-full w-full object-cover" />
+        <>
+          {/* মোবাইলে কার্ড লেআউট — আগে একটা wide টেবিল ব্যবহার হতো যা মোবাইলে
+              পাশের দিকে overflow করে "অ্যাকশন" (এডিট/ডিলিট বাটন) স্ক্রিনের
+              বাইরে চলে যেত। এখন মোবাইলে প্রতিটি পণ্য একটা স্ট্যাকড কার্ড
+              হিসেবে দেখাবে, বাটনগুলো দরকার হলে ২-৩ লাইনে wrap করবে (কখনো
+              স্ক্রিনের বাইরে যাবে না) — বড় স্ক্রিনে (md+) আগের মতোই টেবিল। */}
+          <div className="space-y-3 md:hidden">
+            {products.map((p) => (
+              <div key={p.id} className="rounded-xl border border-border bg-card p-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-secondary">
+                    {p.thumbnail_url && (
+                      <img src={p.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 font-medium leading-snug">{p.name}</p>
+                    <div className="mt-1 flex items-center gap-1.5 text-sm">
+                      {getDiscountedPrice(p).hasDiscount ? (
+                        <>
+                          <span className="font-medium">{formatPriceBn(getDiscountedPrice(p).finalPrice)}</span>
+                          <span className="text-xs text-muted-foreground line-through">{formatPriceBn(p.price)}</span>
+                        </>
+                      ) : (
+                        <span className="font-medium">{formatPriceBn(p.price)}</span>
                       )}
                     </div>
-                    <span className="line-clamp-1 font-medium">{p.name}</span>
-                  </td>
-                  <td className="p-3">
-                    {getDiscountedPrice(p).hasDiscount ? (
-                      <span className="flex items-center gap-1.5">
-                        <span className="font-medium">{formatPriceBn(getDiscountedPrice(p).finalPrice)}</span>
-                        <span className="text-xs text-muted-foreground line-through">{formatPriceBn(p.price)}</span>
-                      </span>
-                    ) : (
-                      formatPriceBn(p.price)
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <div className="flex flex-col gap-0.5 text-xs">
-                      <span
-                        className={
-                          Number(p.stock_quantity ?? 0) <= 0
-                            ? "font-medium text-destructive"
-                            : "font-medium text-foreground"
-                        }
-                      >
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span className={Number(p.stock_quantity ?? 0) <= 0 ? "font-medium text-destructive" : ""}>
                         স্টক: {p.stock_quantity ?? 0}
                       </span>
-                      <span className="text-muted-foreground">বিক্রি: {p.sold_count ?? 0}</span>
+                      <span>বিক্রি: {p.sold_count ?? 0}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 font-medium ${
+                          p.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {p.is_active ? "সক্রিয়" : "নিষ্ক্রিয়"}
+                      </span>
                     </div>
-                  </td>
-                  <td className="p-3">
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        p.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {p.is_active ? "সক্রিয়" : "নিষ্ক্রিয়"}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex gap-1.5">
-                      <Button variant="ghost" size="icon" disabled={busyId === p.id} onClick={() => toggleActive(p)} title={p.is_active ? "নিষ্ক্রিয় করুন" : "সক্রিয় করুন"}>
-                        {p.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link to={editProductPath(p.id)} title="এডিট করুন">
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" disabled={busyId === p.id} onClick={() => handleDelete(p.id)} title="মুছুন">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </td>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 min-w-[100px]"
+                    disabled={busyId === p.id}
+                    onClick={() => toggleActive(p)}
+                  >
+                    {p.is_active ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    {p.is_active ? "নিষ্ক্রিয়" : "সক্রিয়"}
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex-1 min-w-[100px]" asChild>
+                    <Link to={editProductPath(p.id)}>
+                      <Pencil className="h-3.5 w-3.5" /> এডিট
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 min-w-[100px] text-destructive hover:text-destructive"
+                    disabled={busyId === p.id}
+                    onClick={() => handleDelete(p.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> ডিলিট
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ডেস্কটপ/ট্যাবলেট (md+) — টেবিল লেআউট */}
+          <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border bg-secondary/50 text-left">
+                <tr>
+                  <th className="p-3 font-medium">পণ্য</th>
+                  <th className="p-3 font-medium">মূল্য</th>
+                  <th className="p-3 font-medium">স্টক / বিক্রি</th>
+                  <th className="p-3 font-medium">অবস্থা</th>
+                  <th className="p-3 font-medium">অ্যাকশন</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {products.map((p) => (
+                  <tr key={p.id} className="border-b border-border last:border-0">
+                    <td className="flex items-center gap-3 p-3">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-secondary">
+                        {p.thumbnail_url && (
+                          <img src={p.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                        )}
+                      </div>
+                      <span className="line-clamp-1 font-medium">{p.name}</span>
+                    </td>
+                    <td className="p-3">
+                      {getDiscountedPrice(p).hasDiscount ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="font-medium">{formatPriceBn(getDiscountedPrice(p).finalPrice)}</span>
+                          <span className="text-xs text-muted-foreground line-through">{formatPriceBn(p.price)}</span>
+                        </span>
+                      ) : (
+                        formatPriceBn(p.price)
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <div className="flex flex-col gap-0.5 text-xs">
+                        <span
+                          className={
+                            Number(p.stock_quantity ?? 0) <= 0
+                              ? "font-medium text-destructive"
+                              : "font-medium text-foreground"
+                          }
+                        >
+                          স্টক: {p.stock_quantity ?? 0}
+                        </span>
+                        <span className="text-muted-foreground">বিক্রি: {p.sold_count ?? 0}</span>
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          p.is_active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {p.is_active ? "সক্রিয়" : "নিষ্ক্রিয়"}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        <Button variant="ghost" size="icon" disabled={busyId === p.id} onClick={() => toggleActive(p)} title={p.is_active ? "নিষ্ক্রিয় করুন" : "সক্রিয় করুন"}>
+                          {p.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link to={editProductPath(p.id)} title="এডিট করুন">
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" disabled={busyId === p.id} onClick={() => handleDelete(p.id)} title="মুছুন">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
