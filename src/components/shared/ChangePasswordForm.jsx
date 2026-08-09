@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { KeyRound, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { saveCredentialToVault } from "@/lib/credentialVault";
@@ -49,7 +49,7 @@ export default function ChangePasswordForm() {
     }
 
     if (user?.id) {
-      await saveCredentialToVault(user.id, password);
+      await saveCredentialToVault(password);
     }
 
     setPassword("");
@@ -61,9 +61,8 @@ export default function ChangePasswordForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="new-password">নতুন পাসওয়ার্ড</Label>
-        <Input
+        <PasswordInput
           id="new-password"
-          type="password"
           required
           minLength={6}
           value={password}
@@ -73,9 +72,8 @@ export default function ChangePasswordForm() {
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="confirm-password">পাসওয়ার্ড আবার লিখুন</Label>
-        <Input
+        <PasswordInput
           id="confirm-password"
-          type="password"
           required
           minLength={6}
           value={confirm}

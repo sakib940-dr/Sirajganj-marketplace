@@ -48,13 +48,20 @@ export default function CredentialsPage() {
       body: { userId: profile.id, newPassword },
     });
 
-    setBusyId(null);
-
     if (error || data?.error) {
+      setBusyId(null);
       setResetError(data?.error || error.message || "পাসওয়ার্ড রিসেট ব্যর্থ হয়েছে।");
       return;
     }
 
+    // Super Admin নিজে reset করছেন বলে RLS-এ is_super_admin() true হয়,
+    // তাই এখানে সরাসরি upsert করলেই নির্ভরযোগ্যভাবে কাজ করে (কোনো edge
+    // function লাগে না) — এটি "ইউজার (রোলসহ)" পেজেও দেখা যাবে।
+    await supabase
+      .from("admin_saved_credentials")
+      .upsert({ user_id: profile.id, password: newPassword }, { onConflict: "user_id" });
+
+    setBusyId(null);
     setResetResult({ name: profile.full_name || profile.email, password: newPassword });
   };
 
@@ -78,10 +85,10 @@ export default function CredentialsPage() {
       <div className="flex items-start gap-3 rounded-xl border border-accent/30 bg-accent/10 p-4 text-sm">
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
         <p>
-          নিরাপত্তার জন্য কোনো ইউজারের পাসওয়ার্ড এখানে প্লেইন টেক্সটে সংরক্ষণ বা প্রদর্শন করা হয় না — এটি
-          Supabase Auth নিজেই hash করে রাখে, কেউ (Admin সহ) তা দেখতে পারে না। এর বদলে আপনি যেকোনো
-          ইউজারের জন্য একটি নতুন পাসওয়ার্ড <strong>তৈরি করে সেট</strong> করতে পারবেন, যা একবার এখানে দেখানো
-          হবে — সেটি কপি করে ইউজারকে নিরাপদ চ্যানেলে (ফোনে বলে বা ব্যক্তিগত মেসেজে) জানিয়ে দিন।
+          এখান থেকে যেকোনো ইউজারের জন্য একটি নতুন পাসওয়ার্ড <strong>তৈরি করে সেট</strong> করতে
+          পারবেন — নতুন পাসওয়ার্ডটি একবার এখানে দেখানো হবে ও স্বয়ংক্রিয়ভাবে Super Admin ভল্টে
+          সংরক্ষিত হয়ে যাবে (পরে <strong>"ইউজার (রোলসহ)"</strong> পেজ থেকে সংশ্লিষ্ট ইউজারে ক্লিক
+          করলেও দেখতে পারবেন)।
         </p>
       </div>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,7 +38,7 @@ export default function RegisterPage() {
     // ভল্টে সংরক্ষণ করা হচ্ছে — SMS/paid reset provider এখনো যোগ করা হয়নি
     // বলে এটি সাময়িক ব্যবস্থা (owner-এর সুস্পষ্ট অনুরোধে)।
     if (data?.user) {
-      await saveCredentialToVault(data.user.id, password);
+      await saveCredentialToVault(password);
     }
 
     // যদি ভিজিটর সেলার হতে চায়, নিরাপদ RPC কল করে request পাঠানো হয়
@@ -120,9 +121,8 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">পাসওয়ার্ড</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 minLength={6}
                 value={password}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { KeyRound, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
     const { data: sessionData } = await supabase.auth.getSession();
     const uid = sessionData?.session?.user?.id;
     if (uid) {
-      await saveCredentialToVault(uid, password);
+      await saveCredentialToVault(password);
     }
     setDone(true);
     setTimeout(() => navigate(ROUTES.HOME), 2000);
@@ -82,11 +82,11 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="password">নতুন পাসওয়ার্ড</Label>
-                <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <PasswordInput id="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="confirm">পাসওয়ার্ড আবার লিখুন</Label>
-                <Input id="confirm" type="password" required minLength={6} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                <PasswordInput id="confirm" required minLength={6} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={submitting}>

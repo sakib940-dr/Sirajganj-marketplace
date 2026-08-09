@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Check, X, ShieldCheck, MapPin, Facebook, ChevronDown, ChevronUp, UserCircle2 } from "lucide-react";
+import { Check, X, ShieldCheck, MapPin, Facebook, ChevronDown, ChevronUp, UserCircle2, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/shared/EmptyState.jsx";
@@ -7,6 +7,18 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import ImageLightbox from "@/components/shared/ImageLightbox.jsx";
 import { formatDateBn } from "@/lib/utils";
 import { VERIFICATION_STATUS, VERIFICATION_STATUS_LABEL_BN } from "@/constants/roles";
+
+const VERIFICATION_BUCKET = "seller-verification";
+
+// public URL থেকে storage-এর ভেতরকার আসল path বের করে আনা হয় (delete
+// করার জন্য bucket.remove([path]) কল করতে path লাগে, পুরো URL নয়)
+function extractStoragePath(publicUrl) {
+  if (!publicUrl) return null;
+  const marker = `/object/public/${VERIFICATION_BUCKET}/`;
+  const idx = publicUrl.indexOf(marker);
+  if (idx === -1) return null;
+  return publicUrl.slice(idx + marker.length);
+}
 
 export default function SellerVerificationManagePage() {
   const [items, setItems] = useState([]);
@@ -37,6 +49,35 @@ export default function SellerVerificationManagePage() {
     setBusyId(null);
   };
 
+  // অনুমোদিত/প্রত্যাখ্যাত/পুরনো একটি ভেরিফিকেশন আবেদন সম্পূর্ণভাবে মুছে
+  // ফেলা হয় — আপলোড করা ফাইল (প্রোফাইল ছবি, NID সামনে/পেছনে) storage থেকে
+  // এবং রেকর্ডটি টেবিল থেকে, দুটোই।
+  const deleteVerification = async (v) => {
+    if (
+      !window.confirm(
+        `"${v.full_name || v.profiles?.full_name || "এই"}" এর ভেরিফিকেশন আবেদন ও এর সাথে আপলোড করা সব ফাইল (NID, প্রোফাইল ছবি) স্থায়ীভাবে মুছে ফেলতে চান? এটি ফিরিয়ে নেওয়া যাবে না।`
+      )
+    )
+      return;
+
+    setBusyId(v.id);
+
+    const paths = [v.profile_photo_url, v.nid_front_url, v.nid_back_url]
+      .map(extractStoragePath)
+      .filter(Boolean);
+    if (paths.length > 0) {
+      await supabase.storage.from(VERIFICATION_BUCKET).remove(paths);
+    }
+
+    const { error } = await supabase.from("seller_verifications").delete().eq("id", v.id);
+    setBusyId(null);
+    if (error) {
+      window.alert("ডিলিট ব্যর্থ হয়েছে: " + error.message);
+      return;
+    }
+    setItems((prev) => prev.filter((it) => it.id !== v.id));
+  };
+
   // প্রতিটি সেলারের সাম্প্রতিক (বর্তমান) আবেদন + পূর্ববর্তী আবেদনের ইতিহাস
   // — items ইতিমধ্যে created_at অনুযায়ী descending সাজানো, তাই প্রতি সেলারের
   // প্রথম entry-ই বর্তমান আবেদন
@@ -64,7 +105,7 @@ export default function SellerVerificationManagePage() {
       <div className="space-y-4">
         {groups.map(([current, ...previous]) => (
           <div key={current.id} className="rounded-xl border border-border bg-card p-5">
-            <VerificationCard v={current} busy={busyId === current.id} onUpdate={updateStatus} />
+            <VerificationCard v={current} busy={busyId === current.id} onUpdate={updateStatus} onDelete={deleteVerification} />
 
             {previous.length > 0 && (
               <div className="mt-4 border-t border-border pt-3">
@@ -81,7 +122,14 @@ export default function SellerVerificationManagePage() {
                   <div className="mt-3 space-y-3">
                     {previous.map((v) => (
                       <div key={v.id} className="rounded-lg border border-border/70 bg-muted/30 p-4">
-                        <VerificationCard v={v} busy={busyId === v.id} onUpdate={updateStatus} readOnlyActions isHistory />
+                        <VerificationCard
+                          v={v}
+                          busy={busyId === v.id}
+                          onUpdate={updateStatus}
+                          onDelete={deleteVerification}
+                          readOnlyActions
+                          isHistory
+                        />
                       </div>
                     ))}
                   </div>
@@ -95,7 +143,7 @@ export default function SellerVerificationManagePage() {
   );
 }
 
-function VerificationCard({ v, busy, onUpdate, readOnlyActions = false, isHistory = false }) {
+function VerificationCard({ v, busy, onUpdate, onDelete, readOnlyActions = false, isHistory = false }) {
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -219,28 +267,35 @@ function VerificationCard({ v, busy, onUpdate, readOnlyActions = false, isHistor
         </div>
       </div>
 
-      {!readOnlyActions && (
-        <div className="mt-4 flex gap-2">
-          <Button
-            size="sm"
-            disabled={busy || v.status === VERIFICATION_STATUS.APPROVED}
-            onClick={() => onUpdate(v.id, VERIFICATION_STATUS.APPROVED)}
-          >
-            <Check className="h-4 w-4" /> অনুমোদন
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={busy || v.status === VERIFICATION_STATUS.REJECTED}
-            onClick={() => onUpdate(v.id, VERIFICATION_STATUS.REJECTED)}
-          >
-            <X className="h-4 w-4" /> প্রত্যাখ্যান
-          </Button>
-        </div>
-      )}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {!readOnlyActions && (
+          <>
+            <Button
+              size="sm"
+              disabled={busy || v.status === VERIFICATION_STATUS.APPROVED}
+              onClick={() => onUpdate(v.id, VERIFICATION_STATUS.APPROVED)}
+            >
+              <Check className="h-4 w-4" /> অনুমোদন
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy || v.status === VERIFICATION_STATUS.REJECTED}
+              onClick={() => onUpdate(v.id, VERIFICATION_STATUS.REJECTED)}
+            >
+              <X className="h-4 w-4" /> প্রত্যাখ্যান
+            </Button>
+          </>
+        )}
+        {/* অনুমোদিত/প্রত্যাখ্যাত/পুরনো — যেকোনো অবস্থাতেই আবেদন ও এর সাথে
+            আপলোড করা ফাইল (NID, প্রোফাইল ছবি) মুছে ফেলা যাবে */}
+        <Button size="sm" variant="destructive" disabled={busy} onClick={() => onDelete(v)}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} ডিলিট করুন
+        </Button>
+      </div>
       {isHistory && (
         <p className="mt-3 text-[11px] italic text-muted-foreground">
-          এটি একটি পূর্ববর্তী (historical) আবেদন — শুধুমাত্র দেখার জন্য সংরক্ষিত, পরিবর্তনযোগ্য নয়।
+          এটি একটি পূর্ববর্তী (historical) আবেদন — শুধুমাত্র দেখার জন্য সংরক্ষিত।
         </p>
       )}
     </div>
