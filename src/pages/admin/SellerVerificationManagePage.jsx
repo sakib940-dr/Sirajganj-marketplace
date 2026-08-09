@@ -6,7 +6,8 @@ import EmptyState from "@/components/shared/EmptyState.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
 import ImageLightbox from "@/components/shared/ImageLightbox.jsx";
 import { formatDateBn } from "@/lib/utils";
-import { VERIFICATION_STATUS, VERIFICATION_STATUS_LABEL_BN } from "@/constants/roles";
+import { VERIFICATION_STATUS, VERIFICATION_STATUS_LABEL_BN, ROLES } from "@/constants/roles";
+import { useAuth } from "@/hooks/useAuth";
 
 const VERIFICATION_BUCKET = "seller-verification";
 
@@ -21,6 +22,15 @@ function extractStoragePath(publicUrl) {
 }
 
 export default function SellerVerificationManagePage() {
+  // ডিলিট শুধুমাত্র Super Admin করতে পারবেন — normal Admin সব তথ্য দেখতে ও
+  // অনুমোদন/প্রত্যাখ্যান করতে পারবেন, কিন্তু ডিলিট বাটন দেখতেই পাবেন না
+  // (owner-এর সুস্পষ্ট অনুরোধে — শুধু ফ্রন্টএন্ডে হাইড করা হচ্ছে, যথেষ্ট,
+  // কারণ ডাটাবেস RLS ইতিমধ্যেই is_admin_or_above() হলে delete allow করে,
+  // যা normal admin-কেও কভার করে — ভবিষ্যতে সত্যিকারের ব্যাকএন্ড লক দরকার
+  // হলে সেটা আলাদাভাবে super_admin-only করে দিতে হবে)
+  const { role: myRole } = useAuth();
+  const isSuperAdmin = myRole === ROLES.SUPER_ADMIN;
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
@@ -105,7 +115,13 @@ export default function SellerVerificationManagePage() {
       <div className="space-y-4">
         {groups.map(([current, ...previous]) => (
           <div key={current.id} className="rounded-xl border border-border bg-card p-5">
-            <VerificationCard v={current} busy={busyId === current.id} onUpdate={updateStatus} onDelete={deleteVerification} />
+            <VerificationCard
+              v={current}
+              busy={busyId === current.id}
+              onUpdate={updateStatus}
+              onDelete={deleteVerification}
+              canDelete={isSuperAdmin}
+            />
 
             {previous.length > 0 && (
               <div className="mt-4 border-t border-border pt-3">
@@ -127,6 +143,7 @@ export default function SellerVerificationManagePage() {
                           busy={busyId === v.id}
                           onUpdate={updateStatus}
                           onDelete={deleteVerification}
+                          canDelete={isSuperAdmin}
                           readOnlyActions
                           isHistory
                         />
@@ -143,7 +160,7 @@ export default function SellerVerificationManagePage() {
   );
 }
 
-function VerificationCard({ v, busy, onUpdate, onDelete, readOnlyActions = false, isHistory = false }) {
+function VerificationCard({ v, busy, onUpdate, onDelete, canDelete = false, readOnlyActions = false, isHistory = false }) {
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -288,10 +305,14 @@ function VerificationCard({ v, busy, onUpdate, onDelete, readOnlyActions = false
           </>
         )}
         {/* অনুমোদিত/প্রত্যাখ্যাত/পুরনো — যেকোনো অবস্থাতেই আবেদন ও এর সাথে
-            আপলোড করা ফাইল (NID, প্রোফাইল ছবি) মুছে ফেলা যাবে */}
-        <Button size="sm" variant="destructive" disabled={busy} onClick={() => onDelete(v)}>
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} ডিলিট করুন
-        </Button>
+            আপলোড করা ফাইল (NID, প্রোফাইল ছবি) মুছে ফেলা যাবে — কিন্তু শুধু
+            Super Admin এই বাটন দেখতে পাবেন, normal Admin দেখতে পারলেও
+            ডিলিট করতে পারবেন না */}
+        {canDelete && (
+          <Button size="sm" variant="destructive" disabled={busy} onClick={() => onDelete(v)}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} ডিলিট করুন
+          </Button>
+        )}
       </div>
       {isHistory && (
         <p className="mt-3 text-[11px] italic text-muted-foreground">

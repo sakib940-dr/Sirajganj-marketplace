@@ -9,6 +9,7 @@ import { ROLES } from "@/constants/roles";
 // Public
 import HomePage from "@/pages/public/HomePage.jsx";
 import CategoryPage from "@/pages/public/CategoryPage.jsx";
+import ProductListSectionPage from "@/pages/public/ProductListSectionPage.jsx";
 import CategoriesListPage from "@/pages/public/CategoriesListPage.jsx";
 import ShopPage from "@/pages/public/ShopPage.jsx";
 import ShopsListPage from "@/pages/public/ShopsListPage.jsx";
@@ -56,6 +57,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.CATEGORIES} element={<CategoriesListPage />} />
         <Route path={ROUTES.CATEGORY} element={<CategoryPage />} />
+        <Route path={ROUTES.PRODUCT_LIST_SECTION} element={<ProductListSectionPage />} />
         <Route path={ROUTES.SHOPS} element={<ShopsListPage />} />
         <Route path={ROUTES.SHOP} element={<ShopPage />} />
         <Route path={ROUTES.PRODUCT} element={<ProductPage />} />

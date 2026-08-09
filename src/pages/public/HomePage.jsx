@@ -14,7 +14,7 @@ import { useShops } from "@/hooks/useShops";
 import { useLatestProducts, usePopularProducts, useDiscountedProducts } from "@/hooks/useProducts";
 import { useBanners } from "@/hooks/useBanners";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { ROUTES } from "@/constants/routes";
+import { ROUTES, productListSectionPath } from "@/constants/routes";
 
 export default function HomePage() {
   const [query, setQuery] = useState("");
@@ -31,7 +31,7 @@ export default function HomePage() {
   }, [location.hash]);
 
   const { categories, loading: catLoading } = useCategories({ rootOnly: true });
-  const { shops, loading: shopLoading } = useShops({ limit: 6 });
+  const { shops, loading: shopLoading } = useShops({ limit: 10 });
   const { products: latestProducts, loading: latestLoading } = useLatestProducts({ limit: 10 });
   const { products: popularProducts, loading: popularLoading } = usePopularProducts({ limit: 10 });
   const { products: discountedProducts, loading: discountedLoading } = useDiscountedProducts({ limit: 10 });
@@ -130,6 +130,7 @@ export default function HomePage() {
         accentClassName="bg-destructive/10 text-destructive"
         products={popularProducts}
         loading={popularLoading}
+        viewAllTo={productListSectionPath("popular")}
         emptyIcon={Package}
         emptyTitle="এখনো কোনো জনপ্রিয় পণ্য নেই"
         emptyDescription="পণ্য বিক্রি ও দেখা শুরু হলে এখানে দেখানো হবে।"
@@ -143,6 +144,7 @@ export default function HomePage() {
         accentClassName="bg-accent/15 text-accent"
         products={discountedProducts}
         loading={discountedLoading}
+        viewAllTo={productListSectionPath("discounted")}
         emptyIcon={Package}
         emptyTitle="এখন কোনো ছাড় চলছে না"
         emptyDescription="সেলাররা ছাড় দিলে পণ্যগুলো এখানে দেখানো হবে।"
@@ -163,7 +165,9 @@ export default function HomePage() {
         emptyDescription="সেলাররা অনুমোদন পেলে তাদের দোকান এখানে প্রদর্শিত হবে।"
       />
 
-      {/* সাম্প্রতিক পণ্য */}
+      {/* সাম্প্রতিক পণ্য — আগে "সব দেখুন" ভুলভাবে সার্চ পেজে পাঠাতো (খালি
+          রেজাল্ট দেখাতো, টাইপ করার সুযোগও ছিল না) — এখন ঠিক করে এই সেকশনের
+          নিজস্ব vertical listing পেজে পাঠানো হচ্ছে, কোনো সার্চ জড়িত নেই */}
       <ProductRow
         title="সাম্প্রতিক পণ্য"
         subtitle="সদ্য যুক্ত হওয়া পণ্যগুলো ঘুরে দেখুন"
@@ -171,7 +175,7 @@ export default function HomePage() {
         accentClassName="bg-primary/10 text-primary"
         products={latestProducts}
         loading={latestLoading}
-        viewAllTo={ROUTES.SEARCH}
+        viewAllTo={productListSectionPath("latest")}
         emptyIcon={Package}
         emptyTitle="এখনো কোনো পণ্য যোগ করা হয়নি"
         emptyDescription="সেলাররা পণ্য যোগ করলে তা এখানে দেখানো হবে।"

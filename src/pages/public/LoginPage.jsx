@@ -31,30 +31,33 @@ export default function LoginPage() {
       return;
     }
 
-    // যদি কোনো Protected route থেকে redirect হয়ে এখানে আসা হয়ে থাকে, সেই
-    // পুরনো আচরণটাই বজায় রাখা হচ্ছে (আগে যেখানে যেতে চেয়েছিল সেখানেই ফেরত পাঠানো)।
-    const redirectFrom = location.state?.from?.pathname;
-    if (redirectFrom) {
-      navigate(redirectFrom, { replace: true });
-      return;
-    }
-
-    // অন্যথায় role অনুযায়ী সঠিক ড্যাশবোর্ডে পাঠানো হচ্ছে — visitor/সাধারণ ইউজার
-    // আগের মতোই Home page-এ যাবে।
+    // role অনুযায়ী গন্তব্য ঠিক করা হচ্ছে — Seller/Admin/Super Admin সবসময়
+    // নিজ নিজ ড্যাশবোর্ডেই যাবেন, কোনো visitor-facing পেজে (redirectFrom)
+    // ফেরত পাঠানো হবে না, যাতে লগইন করার পরেও ভুলবশত visitor experience
+    // (visitor dashboard/হোমপেজ) দেখানো না হয়। শুধুমাত্র সাধারণ ভিজিটরদের
+    // ক্ষেত্রেই আগের redirectFrom আচরণ বজায় রাখা হয়েছে (যেমন: সেভ করতে
+    // গিয়ে লগইন করতে হলে, লগইনের পর আবার সেই প্রোডাক্ট পেজেই ফেরত যাওয়া)।
     let destination = ROUTES.HOME;
     const userId = data?.user?.id;
+    let role = null;
     if (userId) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", userId)
         .single();
-      if (profile?.role === ROLES.SELLER) {
-        destination = ROUTES.DASHBOARD;
-      } else if (profile?.role === ROLES.ADMIN || profile?.role === ROLES.SUPER_ADMIN) {
-        destination = ROUTES.ADMIN;
-      }
+      role = profile?.role ?? null;
     }
+
+    if (role === ROLES.SELLER) {
+      destination = ROUTES.DASHBOARD;
+    } else if (role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN) {
+      destination = ROUTES.ADMIN;
+    } else {
+      const redirectFrom = location.state?.from?.pathname;
+      if (redirectFrom) destination = redirectFrom;
+    }
+
     navigate(destination, { replace: true });
   };
 

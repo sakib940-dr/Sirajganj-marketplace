@@ -1,6 +1,7 @@
 export const ROUTES = {
   HOME: "/",
   CATEGORY: "/category/:slug",
+  PRODUCT_LIST_SECTION: "/products/:section",
   SHOP: "/shop/:shopSlug",
   PRODUCT: "/product/:productSlug",
   SEARCH: "/search",
@@ -41,6 +42,7 @@ export const ROUTES = {
 };
 
 export const categoryPath = (slug) => `/category/${slug}`;
+export const productListSectionPath = (section) => `/products/${section}`;
 export const shopPath = (slug) => `/shop/${slug}`;
 export const productPath = (slug) => `/product/${slug}`;
 export const editProductPath = (id) => `/dashboard/products/${id}/edit`;
