@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, X, FolderTree } from "lucide-react";
+import { Plus, Trash2, Pencil, FolderTree } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { slugify } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ImageUploader from "@/components/shared/ImageUploader.jsx";
 import EmptyState from "@/components/shared/EmptyState.jsx";
 import LoadingSpinner from "@/components/shared/LoadingSpinner.jsx";
@@ -96,64 +97,68 @@ export default function CategoryManagePage() {
         </Button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">{editingId ? "ক্যাটাগরি এডিট করুন" : "নতুন ক্যাটাগরি"}</h3>
-            <button type="button" onClick={() => setShowForm(false)}>
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </div>
-          <div className="flex flex-wrap items-start gap-6">
-            <div>
-              <Label className="mb-2 block">আইকন</Label>
-              <ImageUploader
-                bucket="site-assets"
-                folder="categories"
-                value={form.icon_url}
-                onUploaded={(url) => setForm((f) => ({ ...f, icon_url: url }))}
-              />
-            </div>
-            <div className="flex-1 min-w-[200px] space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="cat_name">নাম *</Label>
-                <Input id="cat_name" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cat_parent">প্যারেন্ট ক্যাটাগরি (ঐচ্ছিক — সাব-ক্যাটাগরি বানাতে নির্বাচন করুন)</Label>
-                <select
-                  id="cat_parent"
-                  value={form.parent_id || ""}
-                  onChange={(e) => setForm((f) => ({ ...f, parent_id: e.target.value }))}
-                  className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="">— মূল ক্যাটাগরি (কোনো প্যারেন্ট নেই) —</option>
-                  {categories
-                    .filter((c) => !c.parent_id && c.id !== editingId)
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cat_order">ক্রম (Sort Order)</Label>
-                <Input
-                  id="cat_order"
-                  type="number"
-                  value={form.sort_order}
-                  onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))}
+      {/* আগে এই ফর্মটা পেজের একদম উপরে (হেডারের ঠিক নিচে) রেন্ডার হতো —
+          তালিকার নিচের দিকে থাকা কোনো ক্যাটাগরি এডিট করতে ক্লিক করলে
+          ইউজারকে ম্যানুয়ালি স্ক্রল করে উপরে উঠতে হতো। এখন এটা একটা মোডাল
+          (popup) হিসেবে খোলে — ঠিক যেখানে ক্লিক করা হয়েছে সেখানেই, কোনো
+          স্ক্রলের দরকার নেই। */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-h-[88vh] w-[92vw] max-w-lg overflow-y-auto rounded-xl bg-card p-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <DialogTitle className="font-semibold">
+              {editingId ? "ক্যাটাগরি এডিট করুন" : "নতুন ক্যাটাগরি"}
+            </DialogTitle>
+            <div className="flex flex-wrap items-start gap-6">
+              <div>
+                <Label className="mb-2 block">আইকন</Label>
+                <ImageUploader
+                  bucket="site-assets"
+                  folder="categories"
+                  value={form.icon_url}
+                  onUploaded={(url) => setForm((f) => ({ ...f, icon_url: url }))}
                 />
               </div>
+              <div className="flex-1 min-w-[200px] space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat_name">নাম *</Label>
+                  <Input id="cat_name" required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat_parent">প্যারেন্ট ক্যাটাগরি (ঐচ্ছিক — সাব-ক্যাটাগরি বানাতে নির্বাচন করুন)</Label>
+                  <select
+                    id="cat_parent"
+                    value={form.parent_id || ""}
+                    onChange={(e) => setForm((f) => ({ ...f, parent_id: e.target.value }))}
+                    className="flex h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">— মূল ক্যাটাগরি (কোনো প্যারেন্ট নেই) —</option>
+                    {categories
+                      .filter((c) => !c.parent_id && c.id !== editingId)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat_order">ক্রম (Sort Order)</Label>
+                  <Input
+                    id="cat_order"
+                    type="number"
+                    value={form.sort_order}
+                    onChange={(e) => setForm((f) => ({ ...f, sort_order: e.target.value }))}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={saving}>
-            {saving ? "সংরক্ষণ হচ্ছে..." : "সংরক্ষণ করুন"}
-          </Button>
-        </form>
-      )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+              {saving ? "সংরক্ষণ হচ্ছে..." : "সংরক্ষণ করুন"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {categories.length === 0 ? (
         <EmptyState icon={FolderTree} title="এখনো কোনো ক্যাটাগরি যোগ করা হয়নি" />

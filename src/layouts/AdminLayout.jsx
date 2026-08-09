@@ -17,6 +17,7 @@ import {
   Shield,
 } from "lucide-react";
 import AdminSidebarNav from "@/components/layout/AdminSidebarNav.jsx";
+import AdminBottomNav from "@/components/layout/AdminBottomNav.jsx";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { ROLES, ROLE_LABEL_BN } from "@/constants/roles";
@@ -79,6 +80,30 @@ export default function AdminLayout() {
         .find((i) => location.pathname.startsWith(i.to));
     return match?.label || "ড্যাশবোর্ড";
   }, [groups, location.pathname]);
+
+  // মোবাইলে এই ৫টা সেকশন (ড্যাশবোর্ড, পণ্য, ক্যাটাগরি, সেলার, ভেরিফিকেশন)
+  // এখন নিচের AdminBottomNav-এ আছে, তাই hamburger drawer-এ সেগুলো আর
+  // দেখানো হয় না — নাহলে একই লিংক দু'জায়গায় ডুপ্লিকেট থাকতো। ডেস্কটপ
+  // সাইডবারে (lg+) যেহেতু bottom nav নেই, সেখানে পূর্ণ `groups`-ই ব্যবহার
+  // করা হয়, শুধু মোবাইল drawer-এর জন্য এই ফিল্টার করা তালিকা।
+  const bottomNavRoutes = useMemo(
+    () =>
+      new Set([
+        ROUTES.ADMIN,
+        ROUTES.ADMIN_PRODUCTS,
+        ROUTES.ADMIN_CATEGORIES,
+        ROUTES.ADMIN_SELLERS,
+        ROUTES.ADMIN_VERIFICATIONS,
+      ]),
+    []
+  );
+  const mobileGroups = useMemo(
+    () =>
+      groups
+        .map((g) => ({ ...g, items: g.items.filter((i) => !bottomNavRoutes.has(i.to)) }))
+        .filter((g) => g.items.length > 0),
+    [groups, bottomNavRoutes]
+  );
 
   return (
     <div className="min-h-screen bg-muted/40">
@@ -175,7 +200,12 @@ export default function AdminLayout() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-3 py-4">
-              <AdminSidebarNav groups={groups} onNavigate={() => setDrawerOpen(false)} />
+              <AdminSidebarNav groups={mobileGroups} onNavigate={() => setDrawerOpen(false)} />
+              {mobileGroups.length === 0 && (
+                <p className="px-2 text-xs text-primary-foreground/50">
+                  প্রধান ৫টা সেকশন নিচের বার থেকে অ্যাক্সেস করুন।
+                </p>
+              )}
             </div>
             <div className="border-t border-primary-foreground/10 p-3">
               <Link
@@ -230,13 +260,16 @@ export default function AdminLayout() {
             </div>
           </header>
 
-          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6">
+          <main className="min-w-0 flex-1 px-4 py-6 pb-24 sm:px-6 lg:pb-6">
             <div className="mx-auto w-full max-w-6xl">
               <Outlet />
             </div>
           </main>
         </div>
       </div>
+
+      {/* মোবাইলে (lg-এর নিচে) — ৫টা প্রধান সেকশনের জন্য bottom navigation */}
+      <AdminBottomNav />
     </div>
   );
 }
